@@ -1,0 +1,68 @@
+.back {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  h1 {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+section {
+  margin-top: 2rem;
+}
+
+.muted {
+  color: var(--tf-color-text-muted);
+}
+
+.error {
+  color: var(--tf-color-danger);
+}
+
+.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+
+  tf-form-field {
+    flex: 1 1 16rem;
+  }
+}
+
+.role-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  select {
+    min-height: 2.5rem;
+    padding: 0 0.5rem;
+    border: 1px solid var(--tf-color-border);
+    border-radius: var(--tf-radius);
+    background: var(--tf-color-surface);
+    color: var(--tf-color-text);
+    font: inherit;
+    text-transform: capitalize;
+  }
+}
+
+.danger-zone {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--tf-color-border);
+}

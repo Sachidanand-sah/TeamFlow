@@ -28,7 +28,7 @@ Users can belong to several workspaces, with a different role in each.
     strictly below your own. So ADMINs manage MEMBER/VIEWER; only the OWNER manages ADMINs;
   - nobody changes their own role; OWNER is never granted through the API;
   - anyone but the OWNER can leave; the OWNER deletes the workspace instead.
-    The Angular app uses the same functions to hide actions, but the API is the authority.
+- The Angular app uses the same functions to hide actions, but the API is the authority.
 - Members are added by email of an **existing** account. Invitations for people
   without an account come with the email queue (MVP step 8).
 

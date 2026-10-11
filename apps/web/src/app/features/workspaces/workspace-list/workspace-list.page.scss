@@ -1,0 +1,54 @@
+h1 {
+  margin-top: 0;
+}
+
+.muted {
+  color: var(--tf-color-text-muted);
+}
+
+.error {
+  color: var(--tf-color-danger);
+}
+
+.workspace-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.workspace-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px solid var(--tf-color-border);
+  border-radius: 8px;
+  background: var(--tf-color-surface);
+  color: var(--tf-color-text);
+  text-decoration: none;
+
+  &:hover {
+    border-color: var(--tf-color-primary);
+  }
+}
+
+.workspace-card__name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.create {
+  margin-top: 2.5rem;
+  max-width: 28rem;
+}
+
+.create__form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 0.75rem;
+}

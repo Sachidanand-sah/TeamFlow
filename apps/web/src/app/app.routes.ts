@@ -20,12 +20,29 @@ export const appRoutes: Route[] = [
       ),
   },
   {
+    // Everything below needs a session; the guard on the parent covers all children.
     path: '',
-    pathMatch: 'full',
     canActivate: [authGuard],
-    title: 'TeamFlow',
-    loadComponent: () =>
-      import('./features/home/home.page').then((m) => m.HomePage),
+    loadComponent: () => import('./core/layout/shell').then((m) => m.Shell),
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        title: 'Workspaces · TeamFlow',
+        loadComponent: () =>
+          import('./features/workspaces/workspace-list/workspace-list.page').then(
+            (m) => m.WorkspaceListPage,
+          ),
+      },
+      {
+        path: 'workspaces/:workspaceId',
+        title: 'Workspace · TeamFlow',
+        loadComponent: () =>
+          import('./features/workspaces/workspace-detail/workspace-detail.page').then(
+            (m) => m.WorkspaceDetailPage,
+          ),
+      },
+    ],
   },
   { path: '**', redirectTo: '' },
 ];
