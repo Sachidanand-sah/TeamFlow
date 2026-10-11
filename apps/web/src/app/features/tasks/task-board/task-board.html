@@ -1,16 +1,27 @@
 @if (loading()) {
-  <p class="muted">Loading board…</p>
+  <div class="board">
+    @for (status of statuses; track status) {
+      <div class="tf-skeleton" style="height: 18rem"></div>
+    }
+  </div>
 } @else if (loadError(); as message) {
-  <p class="error" role="alert">{{ message }}</p>
+  <p class="tf-alert tf-alert--danger" role="alert">{{ message }}</p>
 } @else {
   @if (boardError(); as message) {
-    <p class="error" role="alert">{{ message }}</p>
+    <p class="tf-alert tf-alert--danger board-error" role="alert">
+      {{ message }}
+    </p>
   }
 
   <div class="board" cdkDropListGroup>
     @for (status of statuses; track status) {
-      <section class="column" [attr.aria-labelledby]="'column-' + status">
+      <section
+        class="column"
+        [class]="'column column--' + status.toLowerCase()"
+        [attr.aria-labelledby]="'column-' + status"
+      >
         <header class="column__header">
+          <span class="column__dot" aria-hidden="true"></span>
           <h2 [id]="'column-' + status">{{ labels[status] }}</h2>
           <span class="column__count">{{ columns()[status].length }}</span>
         </header>
@@ -33,6 +44,10 @@
                 (keydown.enter)="selectedId.set(task.id)"
               />
             </li>
+          } @empty {
+            <li class="column__empty" aria-hidden="true">
+              {{ canEdit() ? 'Drop tasks here' : 'No tasks' }}
+            </li>
           }
         </ul>
 
@@ -41,10 +56,11 @@
             <label class="visually-hidden" for="quick-add-title">
               New task title
             </label>
+            <tf-icon class="quick-add__icon" name="plus" />
             <input
               id="quick-add-title"
               type="text"
-              placeholder="+ Add a task"
+              placeholder="Add a task… (Enter)"
               autocomplete="off"
               formControlName="title"
               [attr.aria-busy]="adding()"

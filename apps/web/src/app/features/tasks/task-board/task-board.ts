@@ -4,6 +4,7 @@ import {
   CdkDropList,
   CdkDropListGroup,
 } from '@angular/cdk/drag-drop';
+import { IconComponent } from '@teamflow/ui';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -70,6 +71,7 @@ const TASK_ERRORS = {
     CdkDropList,
     CdkDrag,
     ReactiveFormsModule,
+    IconComponent,
     TaskAttachments,
     TaskCard,
     TaskComments,

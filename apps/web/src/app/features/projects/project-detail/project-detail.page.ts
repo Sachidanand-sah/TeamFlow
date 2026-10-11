@@ -22,7 +22,12 @@ import {
   ProjectDto,
   WorkspaceDto,
 } from '@teamflow/shared';
-import { ButtonComponent, FormFieldComponent } from '@teamflow/ui';
+import {
+  ButtonComponent,
+  colorFor,
+  FormFieldComponent,
+  IconComponent,
+} from '@teamflow/ui';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { httpErrorMessage } from '../../../core/http-error-message';
 import { ProjectsApi } from '../../../core/projects/projects.api';
@@ -38,6 +43,7 @@ import { TaskBoard } from '../../tasks/task-board/task-board';
     RouterLink,
     ButtonComponent,
     FormFieldComponent,
+    IconComponent,
     TaskBoard,
     ActivityFeed,
   ],
@@ -49,6 +55,8 @@ export class ProjectDetailPage implements OnInit {
   /** Route params, bound by withComponentInputBinding. */
   readonly workspaceId = input.required<string>();
   readonly projectId = input.required<string>();
+
+  protected readonly colorFor = colorFor;
 
   private readonly projectsApi = inject(ProjectsApi);
   private readonly workspacesApi = inject(WorkspacesApi);

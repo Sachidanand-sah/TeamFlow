@@ -1,14 +1,21 @@
-<div class="heading">
+<div class="tf-section-title">
   <h2 id="projects-title">Projects</h2>
   @if (canCreate() && !showForm()) {
-    <tf-button variant="secondary" (click)="showForm.set(true)">
+    <tf-button (click)="showForm.set(true)">
+      <tf-icon name="plus" />
       New project
     </tf-button>
   }
 </div>
 
 @if (showForm()) {
-  <form class="create" [formGroup]="form" (ngSubmit)="create()" novalidate>
+  <form
+    class="create tf-card"
+    [formGroup]="form"
+    (ngSubmit)="create()"
+    novalidate
+  >
+    <h3>Create a project</h3>
     <div class="create__row">
       <tf-form-field
         class="create__name"
@@ -19,6 +26,7 @@
         <input
           id="project-name"
           type="text"
+          placeholder="e.g. Website relaunch"
           formControlName="name"
           aria-describedby="project-name-error"
         />
@@ -32,6 +40,8 @@
         <input
           id="project-key"
           type="text"
+          class="key-input"
+          placeholder="WEB"
           formControlName="key"
           maxlength="10"
           autocapitalize="characters"
@@ -41,7 +51,7 @@
       </tf-form-field>
     </div>
     <p id="project-key-hint" class="hint">
-      Prefix for task ids, e.g. WEB-12. It cannot be changed later.
+      The key prefixes task ids, e.g. WEB-12. It cannot be changed later.
     </p>
     <tf-form-field
       label="Description (optional)"
@@ -51,43 +61,67 @@
       <textarea
         id="project-description"
         rows="3"
+        placeholder="What is this project about?"
         formControlName="description"
         aria-describedby="project-description-error"
       ></textarea>
     </tf-form-field>
     @if (createError(); as message) {
-      <p class="error" role="alert">{{ message }}</p>
+      <p class="tf-alert tf-alert--danger" role="alert">{{ message }}</p>
     }
     <div class="create__actions">
+      <tf-button variant="ghost" (click)="showForm.set(false)"
+        >Cancel</tf-button
+      >
       <tf-button type="submit" [loading]="creating()">Create project</tf-button>
-      <tf-button variant="secondary" (click)="showForm.set(false)">
-        Cancel
-      </tf-button>
     </div>
   </form>
 }
 
 @if (loading()) {
-  <p class="muted">Loading projects…</p>
-} @else if (loadError(); as message) {
-  <p class="error" role="alert">{{ message }}</p>
-} @else if (projects().length === 0) {
-  <p class="muted">
-    No projects yet.
-    @if (!canCreate()) {
-      An admin can create the first one.
+  <div class="projects">
+    @for (i of [1, 2]; track i) {
+      <div class="tf-skeleton" style="height: 8rem"></div>
     }
-  </p>
+  </div>
+} @else if (loadError(); as message) {
+  <p class="tf-alert tf-alert--danger" role="alert">{{ message }}</p>
+} @else if (projects().length === 0) {
+  <div class="empty tf-card">
+    <div class="empty__icon"><tf-icon name="kanban" [size]="26" /></div>
+    <strong>No projects yet</strong>
+    <p class="tf-muted">
+      Projects hold your Kanban board, tasks and files.
+      @if (!canCreate()) {
+        An admin can create the first one.
+      }
+    </p>
+  </div>
 } @else {
   <ul class="projects" aria-labelledby="projects-title">
     @for (project of projects(); track project.id) {
       <li>
         <a
-          class="project"
+          class="project tf-card"
           [routerLink]="['/workspaces', workspaceId(), 'projects', project.id]"
         >
-          <span class="project__key">{{ project.key }}</span>
+          <span class="project__top">
+            <span
+              class="project__key"
+              [style.background]="colorFor(project.key)"
+            >
+              {{ project.key }}
+            </span>
+            <tf-icon class="project__arrow" name="chevron-right" />
+          </span>
           <span class="project__name">{{ project.name }}</span>
+          <span class="project__desc">
+            {{ project.description || 'No description' }}
+          </span>
+          <span class="project__open">
+            <tf-icon name="kanban" [size]="14" />
+            Open board
+          </span>
         </a>
       </li>
     }

@@ -16,7 +16,12 @@ import {
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
 } from '@teamflow/shared';
-import { ButtonComponent, FormFieldComponent } from '@teamflow/ui';
+import {
+  ButtonComponent,
+  FormFieldComponent,
+  IconComponent,
+} from '@teamflow/ui';
+import { AuthLayout } from '../auth-layout';
 import { AuthService } from '../../../core/auth/auth.service';
 import { httpErrorMessage } from '../../../core/http-error-message';
 
@@ -29,6 +34,8 @@ type Field = 'name' | 'email' | 'password';
     RouterLink,
     ButtonComponent,
     FormFieldComponent,
+    IconComponent,
+    AuthLayout,
   ],
   templateUrl: './register.page.html',
   styleUrl: '../auth-page.scss',
@@ -37,6 +44,8 @@ type Field = 'name' | 'email' | 'password';
 export class RegisterPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+
+  protected readonly showPassword = signal(false);
 
   protected readonly passwordMinLength = PASSWORD_MIN_LENGTH;
   // Same limits as the API DTO (both come from @teamflow/shared), so the user sees

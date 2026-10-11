@@ -11,7 +11,12 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EMAIL_MAX_LENGTH, PASSWORD_MAX_LENGTH } from '@teamflow/shared';
-import { ButtonComponent, FormFieldComponent } from '@teamflow/ui';
+import {
+  ButtonComponent,
+  FormFieldComponent,
+  IconComponent,
+} from '@teamflow/ui';
+import { AuthLayout } from '../auth-layout';
 import { safeReturnUrl } from '../../../core/auth/auth.guards';
 import { AuthService } from '../../../core/auth/auth.service';
 import { httpErrorMessage } from '../../../core/http-error-message';
@@ -24,6 +29,8 @@ import { httpErrorMessage } from '../../../core/http-error-message';
     RouterLink,
     ButtonComponent,
     FormFieldComponent,
+    IconComponent,
+    AuthLayout,
   ],
   templateUrl: './login.page.html',
   styleUrl: '../auth-page.scss',
@@ -33,6 +40,8 @@ export class LoginPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+
+  protected readonly showPassword = signal(false);
 
   protected readonly form = inject(NonNullableFormBuilder).group({
     email: [

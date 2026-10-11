@@ -25,7 +25,12 @@ import {
   WORKSPACE_NAME_MAX_LENGTH,
   WorkspaceDto,
 } from '@teamflow/shared';
-import { ButtonComponent, FormFieldComponent } from '@teamflow/ui';
+import {
+  ButtonComponent,
+  colorFor,
+  FormFieldComponent,
+  IconComponent,
+} from '@teamflow/ui';
 import { catchError, forkJoin, Observable, of, switchMap } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { httpErrorMessage } from '../../../core/http-error-message';
@@ -48,6 +53,7 @@ const MEMBER_ERRORS = {
     RouterLink,
     ButtonComponent,
     FormFieldComponent,
+    IconComponent,
     MemberList,
     ProjectsSection,
     RoleBadge,
@@ -59,6 +65,11 @@ const MEMBER_ERRORS = {
 export class WorkspaceDetailPage implements OnInit {
   /** Bound from the `:workspaceId` route parameter (withComponentInputBinding). */
   readonly workspaceId = input.required<string>();
+
+  protected readonly colorFor = colorFor;
+  protected roleLabel(role: string): string {
+    return role.charAt(0) + role.slice(1).toLowerCase();
+  }
 
   private readonly api = inject(WorkspacesApi);
   private readonly router = inject(Router);

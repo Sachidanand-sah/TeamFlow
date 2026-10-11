@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivityDto, describeActivity } from '@teamflow/shared';
+import { AvatarComponent, IconComponent } from '@teamflow/ui';
 import {
   catchError,
   combineLatest,
@@ -27,21 +28,32 @@ import { relativeTime } from '../../core/relative-time';
 /** Smart: a project's history, newest first, with "Show older". */
 @Component({
   selector: 'tf-activity-feed',
+  imports: [AvatarComponent, IconComponent],
   template: `
-    <h2 class="title">Activity</h2>
+    <h2 class="title">
+      <tf-icon name="activity" />
+      Activity
+    </h2>
     @if (loading()) {
-      <p class="muted">Loading activity…</p>
+      <div class="tf-skeleton" style="height: 6rem"></div>
     } @else if (error(); as message) {
-      <p class="error" role="alert">{{ message }}</p>
+      <p class="tf-alert tf-alert--danger" role="alert">{{ message }}</p>
     } @else if (items().length === 0) {
       <p class="muted">Nothing has happened here yet.</p>
     } @else {
       <ol class="feed">
         @for (item of items(); track item.id) {
-          <li>
-            <strong>{{ item.actor?.name ?? 'Someone' }}</strong>
-            {{ describe(item) }}
-            <span class="muted">· {{ relativeTime(item.createdAt) }}</span>
+          <li class="entry">
+            <tf-avatar [name]="item.actor?.name ?? 'Someone'" [size]="28" />
+            <div class="entry__text">
+              <span>
+                <strong>{{ item.actor?.name ?? 'Someone' }}</strong>
+                {{ describe(item) }}
+              </span>
+              <time class="muted" [attr.datetime]="item.createdAt">
+                {{ relativeTime(item.createdAt) }}
+              </time>
+            </div>
           </li>
         }
       </ol>
@@ -62,33 +74,64 @@ import { relativeTime } from '../../core/relative-time';
       display: block;
     }
     .title {
-      margin: 0 0 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0 0 1.25rem;
       font-size: 1rem;
     }
     .muted {
       color: var(--tf-color-text-muted);
     }
-    .error {
-      color: var(--tf-color-danger);
-    }
     .feed {
+      position: relative;
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 1.125rem;
       margin: 0;
       padding: 0;
       list-style: none;
       font-size: 0.875rem;
       overflow-wrap: anywhere;
     }
+    /* Timeline rail behind the avatars. */
+    .feed::before {
+      content: '';
+      position: absolute;
+      top: 0.5rem;
+      bottom: 0.5rem;
+      left: 13px;
+      width: 2px;
+      background: var(--tf-color-border);
+    }
+    .entry {
+      position: relative;
+      display: flex;
+      gap: 0.75rem;
+    }
+    .entry__text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+      padding-top: 0.25rem;
+    }
+    time {
+      font-size: 0.75rem;
+    }
     .more {
-      margin-top: 0.75rem;
-      padding: 0;
-      border: 0;
-      background: none;
-      color: var(--tf-color-primary);
+      margin-top: 1.25rem;
+      padding: 0.375rem 0.75rem;
+      border: 1px solid var(--tf-color-border-strong);
+      border-radius: var(--tf-radius);
+      background: var(--tf-color-surface);
+      color: var(--tf-color-text);
       font: inherit;
+      font-size: 0.8125rem;
+      font-weight: 500;
       cursor: pointer;
+    }
+    .more:hover {
+      background: var(--tf-color-surface-hover);
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

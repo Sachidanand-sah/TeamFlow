@@ -27,7 +27,11 @@ import {
   TaskStatus,
   UpdateTaskRequest,
 } from '@teamflow/shared';
-import { ButtonComponent, FormFieldComponent } from '@teamflow/ui';
+import {
+  ButtonComponent,
+  FormFieldComponent,
+  IconComponent,
+} from '@teamflow/ui';
 
 /**
  * Dumb: shows and edits one task, emits intents. The board (smart parent) talks to
@@ -35,7 +39,12 @@ import { ButtonComponent, FormFieldComponent } from '@teamflow/ui';
  */
 @Component({
   selector: 'tf-task-panel',
-  imports: [ReactiveFormsModule, ButtonComponent, FormFieldComponent],
+  imports: [
+    ReactiveFormsModule,
+    ButtonComponent,
+    FormFieldComponent,
+    IconComponent,
+  ],
   templateUrl: './task-panel.html',
   styleUrl: './task-panel.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -57,6 +66,10 @@ export class TaskPanel {
   protected readonly statuses = TASK_STATUSES;
   protected readonly statusLabels = TASK_STATUS_LABELS;
   protected readonly priorities = TASK_PRIORITIES;
+
+  protected priorityLabel(priority: TaskPriority): string {
+    return priority.charAt(0) + priority.slice(1).toLowerCase();
+  }
 
   private readonly titleInput =
     viewChild<ElementRef<HTMLInputElement>>('titleInput');

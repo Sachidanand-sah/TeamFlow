@@ -14,7 +14,12 @@ import {
 } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { WORKSPACE_NAME_MAX_LENGTH, WorkspaceDto } from '@teamflow/shared';
-import { ButtonComponent, FormFieldComponent } from '@teamflow/ui';
+import {
+  ButtonComponent,
+  colorFor,
+  FormFieldComponent,
+  IconComponent,
+} from '@teamflow/ui';
 import { httpErrorMessage } from '../../../core/http-error-message';
 import { WorkspacesApi } from '../../../core/workspaces/workspaces.api';
 import { RoleBadge } from '../role-badge';
@@ -27,6 +32,7 @@ import { RoleBadge } from '../role-badge';
     RouterLink,
     ButtonComponent,
     FormFieldComponent,
+    IconComponent,
     RoleBadge,
   ],
   templateUrl: './workspace-list.page.html',
@@ -36,6 +42,8 @@ import { RoleBadge } from '../role-badge';
 export class WorkspaceListPage implements OnInit {
   private readonly api = inject(WorkspacesApi);
   private readonly destroyRef = inject(DestroyRef);
+
+  protected readonly colorFor = colorFor;
 
   protected readonly workspaces = signal<WorkspaceDto[]>([]);
   protected readonly loading = signal(true);

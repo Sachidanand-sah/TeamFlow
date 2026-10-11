@@ -1,75 +1,84 @@
-<h3 class="title">Comments</h3>
+<h3 class="title">
+  <tf-icon name="message" />
+  Comments
+  @if (comments().length > 0) {
+    <span class="title__count">{{ comments().length }}</span>
+  }
+</h3>
 
 @if (loading()) {
-  <p class="muted">Loading comments…</p>
+  <div class="tf-skeleton" style="height: 3rem"></div>
 } @else {
   @if (comments().length === 0) {
-    <p class="muted">No comments yet.</p>
+    <p class="empty">No comments yet. Start the conversation.</p>
   }
   <ol class="thread">
     @for (comment of comments(); track comment.id) {
       <li class="comment">
-        <div class="comment__meta">
-          <strong>{{ comment.author?.name ?? 'Deleted user' }}</strong>
-          <span class="muted">
-            {{ relativeTime(comment.createdAt) }}
-            @if (comment.editedAt) {
-              · edited
-            }
-          </span>
-        </div>
-
-        @if (editingId() === comment.id) {
-          <label class="visually-hidden" [for]="'edit-' + comment.id">
-            Edit comment
-          </label>
-          <textarea
-            [id]="'edit-' + comment.id"
-            rows="3"
-            [maxlength]="maxLength"
-            [(ngModel)]="editText"
-          ></textarea>
-          <div class="comment__actions">
-            <button
-              type="button"
-              class="link"
-              [disabled]="busy()"
-              (click)="saveEdit(comment)"
-            >
-              Save
-            </button>
-            <button type="button" class="link" (click)="editingId.set(null)">
-              Cancel
-            </button>
+        <tf-avatar [name]="comment.author?.name ?? '?'" [size]="30" />
+        <div class="comment__main">
+          <div class="comment__meta">
+            <strong>{{ comment.author?.name ?? 'Deleted user' }}</strong>
+            <span class="tf-muted">
+              {{ relativeTime(comment.createdAt) }}
+              @if (comment.editedAt) {
+                · edited
+              }
+            </span>
           </div>
-        } @else {
-          <!-- Interpolation escapes HTML, so a comment can never inject markup. -->
-          <p class="comment__body">{{ comment.body }}</p>
-          <div class="comment__actions">
-            @if (canEdit(comment)) {
-              <button type="button" class="link" (click)="startEdit(comment)">
-                Edit
-              </button>
-            }
-            @if (canDelete(comment)) {
+
+          @if (editingId() === comment.id) {
+            <label class="visually-hidden" [for]="'edit-' + comment.id">
+              Edit comment
+            </label>
+            <textarea
+              [id]="'edit-' + comment.id"
+              rows="3"
+              [maxlength]="maxLength"
+              [(ngModel)]="editText"
+            ></textarea>
+            <div class="comment__actions">
               <button
                 type="button"
-                class="link link--danger"
+                class="link link--primary"
                 [disabled]="busy()"
-                (click)="remove(comment)"
+                (click)="saveEdit(comment)"
               >
-                Delete
+                Save
               </button>
-            }
-          </div>
-        }
+              <button type="button" class="link" (click)="editingId.set(null)">
+                Cancel
+              </button>
+            </div>
+          } @else {
+            <!-- Interpolation escapes HTML, so a comment can never inject markup. -->
+            <p class="comment__body">{{ comment.body }}</p>
+            <div class="comment__actions">
+              @if (canEdit(comment)) {
+                <button type="button" class="link" (click)="startEdit(comment)">
+                  Edit
+                </button>
+              }
+              @if (canDelete(comment)) {
+                <button
+                  type="button"
+                  class="link link--danger"
+                  [disabled]="busy()"
+                  (click)="remove(comment)"
+                >
+                  Delete
+                </button>
+              }
+            </div>
+          }
+        </div>
       </li>
     }
   </ol>
 }
 
 @if (error(); as message) {
-  <p class="error" role="alert">{{ message }}</p>
+  <p class="tf-alert tf-alert--danger" role="alert">{{ message }}</p>
 }
 
 @if (canWrite()) {
@@ -78,12 +87,10 @@
     <textarea
       id="new-comment"
       rows="3"
-      placeholder="Add a comment…"
+      placeholder="Write a comment…"
       formControlName="body"
       [maxlength]="maxLength"
     ></textarea>
-    <tf-button type="submit" variant="secondary" [loading]="busy()">
-      Comment
-    </tf-button>
+    <tf-button type="submit" size="sm" [loading]="busy()">Comment</tf-button>
   </form>
 }

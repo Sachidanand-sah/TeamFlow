@@ -23,7 +23,7 @@ import {
   CommentDto,
   WorkspaceRole,
 } from '@teamflow/shared';
-import { ButtonComponent } from '@teamflow/ui';
+import { AvatarComponent, ButtonComponent, IconComponent } from '@teamflow/ui';
 import { catchError, map, Observable, of, switchMap } from 'rxjs';
 import { CommentsApi, TaskRef } from '../../../core/comments/comments.api';
 import { httpErrorMessage } from '../../../core/http-error-message';
@@ -32,7 +32,13 @@ import { relativeTime } from '../../../core/relative-time';
 /** Smart: one task's comment thread. Rendered inside the (dumb) task panel. */
 @Component({
   selector: 'tf-task-comments',
-  imports: [ReactiveFormsModule, FormsModule, ButtonComponent],
+  imports: [
+    ReactiveFormsModule,
+    FormsModule,
+    ButtonComponent,
+    AvatarComponent,
+    IconComponent,
+  ],
   templateUrl: './task-comments.html',
   styleUrl: './task-comments.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

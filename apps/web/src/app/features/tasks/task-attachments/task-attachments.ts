@@ -19,6 +19,7 @@ import {
   isAllowedAttachmentType,
   WorkspaceRole,
 } from '@teamflow/shared';
+import { IconComponent } from '@teamflow/ui';
 import { catchError, concatMap, last, map, of, switchMap, tap } from 'rxjs';
 import {
   AttachmentsApi,
@@ -30,6 +31,7 @@ import { httpErrorMessage } from '../../../core/http-error-message';
 /** Smart: a task's files. Upload goes browser -> storage, then the API verifies it. */
 @Component({
   selector: 'tf-task-attachments',
+  imports: [IconComponent],
   templateUrl: './task-attachments.html',
   styleUrl: './task-attachments.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,13 +1,17 @@
-<main class="auth-page">
-  <section class="auth-card" aria-labelledby="login-title">
-    <h1 id="login-title">Sign in to TeamFlow</h1>
+<tf-auth-layout>
+  <section aria-labelledby="login-title">
+    <header class="auth-header">
+      <h1 id="login-title">Sign in to TeamFlow</h1>
+      <p>Welcome back! Enter your details to continue.</p>
+    </header>
 
-    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <tf-form-field label="Email" for="email" [error]="fieldError('email')">
         <input
           id="email"
           type="email"
           autocomplete="email"
+          placeholder="you@company.com"
           formControlName="email"
           aria-describedby="email-error"
         />
@@ -18,24 +22,43 @@
         for="password"
         [error]="fieldError('password')"
       >
-        <input
-          id="password"
-          type="password"
-          autocomplete="current-password"
-          formControlName="password"
-          aria-describedby="password-error"
-        />
+        <div class="password">
+          <input
+            id="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            autocomplete="current-password"
+            placeholder="••••••••••••"
+            formControlName="password"
+            aria-describedby="password-error"
+          />
+          <button
+            type="button"
+            class="password__toggle"
+            [attr.aria-label]="showPassword() ? 'Hide' : 'Show'"
+            [attr.aria-pressed]="showPassword()"
+            (click)="showPassword.set(!showPassword())"
+          >
+            <tf-icon [name]="showPassword() ? 'eye-off' : 'eye'" />
+          </button>
+        </div>
       </tf-form-field>
 
       @if (serverError(); as message) {
-        <p class="auth-card__error" role="alert">{{ message }}</p>
+        <p class="tf-alert tf-alert--danger" role="alert">{{ message }}</p>
       }
 
-      <tf-button type="submit" [loading]="submitting()">Sign in</tf-button>
+      <tf-button
+        type="submit"
+        size="lg"
+        [block]="true"
+        [loading]="submitting()"
+      >
+        Sign in
+      </tf-button>
     </form>
 
-    <p class="auth-card__switch">
+    <p class="auth-switch">
       New to TeamFlow? <a routerLink="/register">Create an account</a>
     </p>
   </section>
-</main>
+</tf-auth-layout>

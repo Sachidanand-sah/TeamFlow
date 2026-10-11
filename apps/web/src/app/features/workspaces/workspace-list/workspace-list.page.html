@@ -1,50 +1,88 @@
-<h1>Your workspaces</h1>
+<header class="tf-page-header">
+  <div>
+    <h1>Your workspaces</h1>
+    <p class="tf-page-subtitle">
+      A workspace is a team. Invite people, create projects, ship together.
+    </p>
+  </div>
+</header>
 
 @if (loading()) {
-  <p class="muted">Loading…</p>
+  <div class="grid" aria-busy="true">
+    @for (i of [1, 2, 3]; track i) {
+      <div class="tf-skeleton skeleton-card"></div>
+    }
+  </div>
 } @else if (loadError(); as message) {
-  <p class="error" role="alert">{{ message }}</p>
+  <p class="tf-alert tf-alert--danger" role="alert">{{ message }}</p>
 } @else {
   @if (workspaces().length === 0) {
-    <p class="muted">
-      You are not in any workspace yet. Create one to start organising projects.
-    </p>
-  } @else {
-    <ul class="workspace-list">
-      @for (workspace of workspaces(); track workspace.id) {
-        <li>
-          <a
-            class="workspace-card"
-            [routerLink]="['/workspaces', workspace.id]"
+    <div class="empty tf-card">
+      <div class="empty__icon"><tf-icon name="users" [size]="28" /></div>
+      <h2>Create your first workspace</h2>
+      <p class="tf-muted">
+        You are not in any workspace yet. Create one to start organising
+        projects.
+      </p>
+    </div>
+  }
+
+  <ul class="grid">
+    @for (workspace of workspaces(); track workspace.id) {
+      <li>
+        <a
+          class="workspace-card tf-card"
+          [routerLink]="['/workspaces', workspace.id]"
+        >
+          <span
+            class="workspace-card__tile"
+            [style.background]="colorFor(workspace.name)"
+            aria-hidden="true"
           >
+            {{ workspace.name.charAt(0).toUpperCase() }}
+          </span>
+          <span class="workspace-card__body">
             <span class="workspace-card__name">{{ workspace.name }}</span>
             <tf-role-badge [role]="workspace.role" />
-          </a>
-        </li>
-      }
-    </ul>
-  }
-}
+          </span>
+          <tf-icon class="workspace-card__arrow" name="chevron-right" />
+        </a>
+      </li>
+    }
 
-<section class="create" aria-labelledby="create-title">
-  <h2 id="create-title">New workspace</h2>
-  <form
-    class="create__form"
-    [formGroup]="form"
-    (ngSubmit)="create()"
-    novalidate
-  >
-    <tf-form-field label="Name" for="workspace-name" [error]="nameError()">
-      <input
-        id="workspace-name"
-        type="text"
-        formControlName="name"
-        aria-describedby="workspace-name-error"
-      />
-    </tf-form-field>
-    <tf-button type="submit" [loading]="creating()">Create</tf-button>
-  </form>
-  @if (createError(); as message) {
-    <p class="error" role="alert">{{ message }}</p>
-  }
-</section>
+    <li>
+      <section class="create tf-card" aria-labelledby="create-title">
+        <h2 id="create-title" class="create__title">
+          <tf-icon name="plus" />
+          New workspace
+        </h2>
+        <form
+          class="create__form"
+          [formGroup]="form"
+          (ngSubmit)="create()"
+          novalidate
+        >
+          <tf-form-field
+            label="Name"
+            for="workspace-name"
+            [error]="nameError()"
+          >
+            <input
+              id="workspace-name"
+              type="text"
+              placeholder="e.g. Marketing team"
+              formControlName="name"
+              aria-describedby="workspace-name-error"
+            />
+          </tf-form-field>
+          <tf-button type="submit" [block]="true" [loading]="creating()">
+            Create workspace
+          </tf-button>
+        </form>
+        @if (createError(); as message) {
+          <p class="tf-alert tf-alert--danger" role="alert">{{ message }}</p>
+        }
+      </section>
+    </li>
+  </ul>
+}

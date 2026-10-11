@@ -11,6 +11,7 @@ import {
   MemberDto,
   WorkspaceRole,
 } from '@teamflow/shared';
+import { AvatarComponent, IconComponent } from '@teamflow/ui';
 import { RoleBadge } from '../role-badge';
 
 export interface RoleChange {
@@ -24,11 +25,12 @@ export interface RoleChange {
  */
 @Component({
   selector: 'tf-member-list',
-  imports: [RoleBadge],
+  imports: [RoleBadge, AvatarComponent, IconComponent],
   template: `
     <ul class="members">
       @for (member of members(); track member.userId) {
         <li class="member">
+          <tf-avatar [name]="member.name" [size]="32" />
           <div class="member__who">
             <span class="member__name">
               {{ member.name }}
@@ -44,23 +46,26 @@ export interface RoleChange {
               Role for {{ member.name }}
             </label>
             <select
+              class="member__role"
               [id]="'role-' + member.userId"
               [disabled]="busy()"
               (change)="onRoleSelected(member, $event)"
             >
               @for (role of assignableRoles(); track role) {
                 <option [value]="role" [selected]="role === member.role">
-                  {{ role.toLowerCase() }}
+                  {{ label(role) }}
                 </option>
               }
             </select>
             <button
               type="button"
-              class="link-button"
+              class="member__remove"
+              [attr.aria-label]="'Remove ' + member.name"
+              title="Remove from workspace"
               [disabled]="busy()"
               (click)="remove.emit(member.userId)"
             >
-              Remove
+              <tf-icon name="x" />
             </button>
           } @else {
             <tf-role-badge [role]="member.role" />
@@ -71,18 +76,17 @@ export interface RoleChange {
   `,
   styles: `
     .members {
+      display: flex;
+      flex-direction: column;
       margin: 0;
       padding: 0;
       list-style: none;
-      border: 1px solid var(--tf-color-border);
-      border-radius: 8px;
-      background: var(--tf-color-surface);
     }
     .member {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem 1rem;
+      gap: 0.625rem;
+      padding: 0.5rem 0;
     }
     .member + .member {
       border-top: 1px solid var(--tf-color-border);
@@ -92,32 +96,46 @@ export interface RoleChange {
       flex: 1;
       flex-direction: column;
       min-width: 0;
+      line-height: 1.3;
     }
     .member__name {
+      overflow: hidden;
       font-weight: 600;
+      font-size: 0.875rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .member__you,
     .member__email {
       color: var(--tf-color-text-muted);
-      font-size: 0.875rem;
+      font-size: 0.75rem;
       font-weight: 400;
-      overflow-wrap: anywhere;
     }
-    select {
-      min-height: 2rem;
-      border: 1px solid var(--tf-color-border);
-      border-radius: var(--tf-radius);
-      background: var(--tf-color-surface);
-      color: var(--tf-color-text);
-      font: inherit;
-      text-transform: capitalize;
+    .member__email {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-    .link-button {
+    .member__role {
+      width: auto;
+      min-height: 1.875rem;
+      padding: 0.125rem 1.75rem 0.125rem 0.5rem;
+      font-size: 0.75rem;
+    }
+    .member__remove {
+      display: grid;
+      place-items: center;
+      width: 1.75rem;
+      height: 1.75rem;
       border: 0;
+      border-radius: var(--tf-radius-sm);
       background: none;
-      color: var(--tf-color-danger);
-      font: inherit;
+      color: var(--tf-color-text-subtle);
       cursor: pointer;
+    }
+    .member__remove:hover:not(:disabled) {
+      background: var(--tf-color-danger-surface);
+      color: var(--tf-color-danger);
     }
     .visually-hidden {
       position: absolute;
@@ -140,6 +158,10 @@ export class MemberList {
 
   readonly roleChange = output<RoleChange>();
   readonly remove = output<string>();
+
+  protected label(role: string): string {
+    return role.charAt(0) + role.slice(1).toLowerCase();
+  }
 
   protected canManage(member: MemberDto): boolean {
     return (

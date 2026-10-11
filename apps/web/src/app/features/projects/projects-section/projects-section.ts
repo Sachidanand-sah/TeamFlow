@@ -24,7 +24,12 @@ import {
   suggestProjectKey,
   WorkspaceRole,
 } from '@teamflow/shared';
-import { ButtonComponent, FormFieldComponent } from '@teamflow/ui';
+import {
+  ButtonComponent,
+  colorFor,
+  FormFieldComponent,
+  IconComponent,
+} from '@teamflow/ui';
 import { catchError, map, of, switchMap, tap } from 'rxjs';
 import { httpErrorMessage } from '../../../core/http-error-message';
 import { ProjectsApi } from '../../../core/projects/projects.api';
@@ -40,6 +45,7 @@ import { ProjectsApi } from '../../../core/projects/projects.api';
     RouterLink,
     ButtonComponent,
     FormFieldComponent,
+    IconComponent,
   ],
   templateUrl: './projects-section.html',
   styleUrl: './projects-section.scss',
@@ -48,6 +54,8 @@ import { ProjectsApi } from '../../../core/projects/projects.api';
 export class ProjectsSection implements OnInit {
   readonly workspaceId = input.required<string>();
   readonly role = input.required<WorkspaceRole>();
+
+  protected readonly colorFor = colorFor;
 
   private readonly api = inject(ProjectsApi);
   private readonly destroyRef = inject(DestroyRef);

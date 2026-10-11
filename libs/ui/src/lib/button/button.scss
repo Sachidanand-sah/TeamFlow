@@ -1,5 +1,14 @@
 :host {
-  display: inline-block;
+  display: inline-flex;
+}
+
+:host(.block) {
+  display: flex;
+  width: 100%;
+
+  .tf-button {
+    width: 100%;
+  }
 }
 
 .tf-button {
@@ -7,43 +16,99 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  width: 100%;
-  min-height: 2.5rem;
-  padding: 0 1rem;
   border: 1px solid transparent;
-  border-radius: var(--tf-radius, 6px);
+  border-radius: var(--tf-radius, 8px);
   font: inherit;
   font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
-  transition: background-color 120ms ease;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease,
+    box-shadow 120ms ease,
+    transform 60ms ease;
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
+  }
 
   &:disabled {
     cursor: not-allowed;
-    opacity: 0.6;
+    opacity: 0.55;
   }
 
   &:focus-visible {
-    outline: 2px solid var(--tf-color-focus, #4f7cff);
+    outline: 2px solid var(--tf-color-focus, #6366f1);
     outline-offset: 2px;
   }
 }
 
+// Sizes
+.tf-button--sm {
+  height: 2rem;
+  padding: 0 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.tf-button--md {
+  height: 2.375rem;
+  padding: 0 1rem;
+  font-size: 0.875rem;
+}
+
+.tf-button--lg {
+  height: 2.75rem;
+  padding: 0 1.25rem;
+  font-size: 0.9375rem;
+}
+
+// Variants
 .tf-button--primary {
-  background: var(--tf-color-primary, #3b5bdb);
+  background: var(--tf-color-primary, #4f46e5);
   color: var(--tf-color-on-primary, #fff);
+  box-shadow:
+    var(--tf-shadow-xs),
+    inset 0 1px 0 rgb(255 255 255 / 12%);
 
   &:hover:not(:disabled) {
-    background: var(--tf-color-primary-hover, #364fc7);
+    background: var(--tf-color-primary-hover, #4338ca);
   }
 }
 
 .tf-button--secondary {
-  background: transparent;
-  border-color: var(--tf-color-border, #ced4da);
-  color: var(--tf-color-text, #212529);
+  border-color: var(--tf-color-border-strong, #cbd2de);
+  background: var(--tf-color-surface, #fff);
+  color: var(--tf-color-text, #0f172a);
+  box-shadow: var(--tf-shadow-xs);
 
   &:hover:not(:disabled) {
-    background: var(--tf-color-surface-hover, rgb(0 0 0 / 4%));
+    background: var(--tf-color-surface-hover, #f1f3f9);
+  }
+}
+
+.tf-button--ghost {
+  background: transparent;
+  color: var(--tf-color-text-muted, #64748b);
+
+  &:hover:not(:disabled) {
+    background: var(--tf-color-surface-hover, #f1f3f9);
+    color: var(--tf-color-text, #0f172a);
+  }
+}
+
+.tf-button--danger {
+  border-color: color-mix(
+    in srgb,
+    var(--tf-color-danger, #dc2626) 30%,
+    transparent
+  );
+  background: var(--tf-color-surface, #fff);
+  color: var(--tf-color-danger, #dc2626);
+
+  &:hover:not(:disabled) {
+    background: var(--tf-color-danger-surface, #fef2f2);
   }
 }
 

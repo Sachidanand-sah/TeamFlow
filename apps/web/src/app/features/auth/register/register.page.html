@@ -1,13 +1,17 @@
-<main class="auth-page">
-  <section class="auth-card" aria-labelledby="register-title">
-    <h1 id="register-title">Create your account</h1>
+<tf-auth-layout>
+  <section aria-labelledby="register-title">
+    <header class="auth-header">
+      <h1 id="register-title">Create your account</h1>
+      <p>Start organising your team's work in under a minute.</p>
+    </header>
 
-    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <tf-form-field label="Name" for="name" [error]="fieldError('name')">
         <input
           id="name"
           type="text"
           autocomplete="name"
+          placeholder="Ada Lovelace"
           formControlName="name"
           aria-describedby="name-error"
         />
@@ -18,6 +22,7 @@
           id="email"
           type="email"
           autocomplete="email"
+          placeholder="you@company.com"
           formControlName="email"
           aria-describedby="email-error"
         />
@@ -27,31 +32,49 @@
         label="Password"
         for="password"
         [error]="fieldError('password')"
+        [hint]="
+          'At least ' +
+          passwordMinLength +
+          ' characters. A short sentence works well.'
+        "
       >
-        <input
-          id="password"
-          type="password"
-          autocomplete="new-password"
-          formControlName="password"
-          aria-describedby="password-error password-hint"
-        />
+        <div class="password">
+          <input
+            id="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            autocomplete="new-password"
+            placeholder="A long, memorable sentence"
+            formControlName="password"
+            aria-describedby="password-error password-hint"
+          />
+          <button
+            type="button"
+            class="password__toggle"
+            [attr.aria-label]="showPassword() ? 'Hide' : 'Show'"
+            [attr.aria-pressed]="showPassword()"
+            (click)="showPassword.set(!showPassword())"
+          >
+            <tf-icon [name]="showPassword() ? 'eye-off' : 'eye'" />
+          </button>
+        </div>
       </tf-form-field>
-      <p id="password-hint" class="auth-card__hint">
-        At least {{ passwordMinLength }} characters. A short sentence works
-        well.
-      </p>
 
       @if (serverError(); as message) {
-        <p class="auth-card__error" role="alert">{{ message }}</p>
+        <p class="tf-alert tf-alert--danger" role="alert">{{ message }}</p>
       }
 
-      <tf-button type="submit" [loading]="submitting()"
-        >Create account</tf-button
+      <tf-button
+        type="submit"
+        size="lg"
+        [block]="true"
+        [loading]="submitting()"
       >
+        Create account
+      </tf-button>
     </form>
 
-    <p class="auth-card__switch">
+    <p class="auth-switch">
       Already have an account? <a routerLink="/login">Sign in</a>
     </p>
   </section>
-</main>
+</tf-auth-layout>

@@ -84,7 +84,7 @@ describe('ProjectDetailPage', () => {
     expect(el.querySelector('h1')?.textContent).toContain('Website');
     expect(el.querySelector('.key')?.textContent).toContain('WEB');
     expect(el.textContent).toContain('Marketing site');
-    expect(el.textContent).toContain('← Acme');
+    expect(el.querySelector('.breadcrumb')?.textContent).toContain('Acme');
   });
 
   it('hides edit and delete from non-admins', async () => {

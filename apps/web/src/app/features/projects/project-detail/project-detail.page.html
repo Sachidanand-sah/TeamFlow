@@ -1,12 +1,26 @@
-<a class="back" [routerLink]="['/workspaces', workspaceId()]">
-  ← {{ workspace()?.name ?? 'Workspace' }}
-</a>
+<nav class="breadcrumb" aria-label="Breadcrumb">
+  <a routerLink="/">Workspaces</a>
+  <tf-icon name="chevron-right" [size]="14" />
+  <a [routerLink]="['/workspaces', workspaceId()]">
+    {{ workspace()?.name ?? 'Workspace' }}
+  </a>
+  @if (project(); as p) {
+    <tf-icon name="chevron-right" [size]="14" />
+    <span aria-current="page">{{ p.name }}</span>
+  }
+</nav>
 
 @if (loadError(); as message) {
-  <p class="error" role="alert">{{ message }}</p>
+  <p class="tf-alert tf-alert--danger" role="alert">{{ message }}</p>
 } @else if (project(); as p) {
   @if (editing()) {
-    <form class="edit" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <form
+      class="edit tf-card"
+      [formGroup]="form"
+      (ngSubmit)="save()"
+      novalidate
+    >
+      <h2>Edit project</h2>
       <tf-form-field label="Name" for="project-name" [error]="nameError()">
         <input
           id="project-name"
@@ -18,32 +32,51 @@
       <tf-form-field label="Description" for="project-description">
         <textarea
           id="project-description"
-          rows="4"
+          rows="3"
           formControlName="description"
         ></textarea>
       </tf-form-field>
       <div class="actions">
+        <tf-button variant="ghost" (click)="editing.set(false)"
+          >Cancel</tf-button
+        >
         <tf-button type="submit" [loading]="busy()">Save</tf-button>
-        <tf-button variant="secondary" (click)="editing.set(false)">
-          Cancel
-        </tf-button>
       </div>
     </form>
   } @else {
-    <header class="title">
-      <span class="key">{{ p.key }}</span>
-      <h1>{{ p.name }}</h1>
+    <header class="tf-page-header">
+      <div class="heading">
+        <span class="key" [style.background]="colorFor(p.key)">{{
+          p.key
+        }}</span>
+        <div>
+          <h1>{{ p.name }}</h1>
+          @if (p.description) {
+            <p class="tf-page-subtitle description">{{ p.description }}</p>
+          }
+        </div>
+      </div>
       @if (canEdit()) {
-        <tf-button variant="secondary" (click)="startEditing()">Edit</tf-button>
+        <div class="header-actions">
+          <tf-button variant="secondary" (click)="startEditing()">
+            <tf-icon name="edit" />
+            Edit
+          </tf-button>
+          <tf-button
+            variant="danger"
+            [disabled]="busy()"
+            (click)="deleteProject()"
+          >
+            <tf-icon name="trash" />
+            Delete project
+          </tf-button>
+        </div>
       }
     </header>
-    @if (p.description) {
-      <p class="description">{{ p.description }}</p>
-    }
   }
 
   @if (actionError(); as message) {
-    <p class="error" role="alert">{{ message }}</p>
+    <p class="tf-alert tf-alert--danger" role="alert">{{ message }}</p>
   }
 
   @if (workspace(); as ws) {
@@ -54,22 +87,11 @@
         [role]="ws.role"
       />
     </section>
-    <section class="activity" aria-label="Project activity">
+    <section class="activity tf-card" aria-label="Project activity">
       <tf-activity-feed [workspaceId]="ws.id" [projectId]="p.id" />
     </section>
   }
-
-  @if (canEdit()) {
-    <div class="danger-zone">
-      <tf-button
-        variant="secondary"
-        [disabled]="busy()"
-        (click)="deleteProject()"
-      >
-        Delete project
-      </tf-button>
-    </div>
-  }
 } @else {
-  <p class="muted">Loading…</p>
+  <div class="tf-skeleton" style="height: 4rem; margin-bottom: 1.5rem"></div>
+  <div class="tf-skeleton" style="height: 24rem"></div>
 }
