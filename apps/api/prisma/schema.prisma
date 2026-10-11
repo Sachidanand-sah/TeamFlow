@@ -44,8 +44,27 @@ model Workspace {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   memberships Membership[]
+  projects    Project[]
 
   @@map("workspaces")
+}
+
+model Project {
+  id          String   @id @default(uuid()) @db.Uuid
+  workspaceId String   @map("workspace_id") @db.Uuid
+  /// Short uppercase code used in task numbers (e.g. "TF" -> TF-12). Immutable.
+  key         String
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  /// Keys are unique per workspace (two teams can both have "WEB").
+  /// The index also serves "list projects of workspace W".
+  @@unique([workspaceId, key])
+  @@map("projects")
 }
 
 /// A user's role in one workspace. Access to workspace data is decided by this row.

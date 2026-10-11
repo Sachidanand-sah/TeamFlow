@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client';
 
 /**
@@ -23,4 +24,19 @@ export function isRecordNotFound(error: unknown): boolean {
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === 'P2025'
   );
+}
+
+/** Awaits a write and turns "no row matched" into a 404 with `message`. */
+export async function orNotFound<T>(
+  write: Promise<T>,
+  message: string,
+): Promise<T> {
+  try {
+    return await write;
+  } catch (error) {
+    if (isRecordNotFound(error)) {
+      throw new NotFoundException(message);
+    }
+    throw error;
+  }
 }

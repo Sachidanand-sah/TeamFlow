@@ -12,8 +12,8 @@ import {
   MemberDto,
 } from '@teamflow/shared';
 import {
-  isRecordNotFound,
   isUniqueConstraintViolation,
+  orNotFound,
 } from '../../prisma/prisma-errors';
 import { UsersService } from '../users/users.service';
 import {
@@ -21,6 +21,8 @@ import {
   MembershipWithUser,
 } from './memberships.repository';
 import { WorkspaceMember } from './workspace-member';
+
+const MEMBER_NOT_FOUND = 'Member not found';
 
 function toMemberDto(membership: MembershipWithUser): MemberDto {
   return {
@@ -100,8 +102,10 @@ export class MembersService {
       throw new ForbiddenException('Your role does not allow this change');
     }
 
-    const updated = await this.orNotFound(
+    // orNotFound: the member may be removed concurrently between check and write.
+    const updated = await orNotFound(
       this.memberships.updateRole(actor.workspaceId, targetUserId, role),
+      MEMBER_NOT_FOUND,
     );
     return toMemberDto(updated);
   }
@@ -114,8 +118,9 @@ export class MembersService {
           'The owner cannot leave the workspace. Delete it instead.',
         );
       }
-      await this.orNotFound(
+      await orNotFound(
         this.memberships.delete(actor.workspaceId, actor.userId),
+        MEMBER_NOT_FOUND,
       );
       return;
     }
@@ -126,28 +131,17 @@ export class MembersService {
         'Your role does not allow removing this member',
       );
     }
-    await this.orNotFound(
+    await orNotFound(
       this.memberships.delete(actor.workspaceId, targetUserId),
+      MEMBER_NOT_FOUND,
     );
   }
 
   private async findTarget(actor: WorkspaceMember, userId: string) {
     const target = await this.memberships.find(actor.workspaceId, userId);
     if (!target) {
-      throw new NotFoundException('Member not found');
+      throw new NotFoundException(MEMBER_NOT_FOUND);
     }
     return target;
-  }
-
-  /** The member vanished between our check and our write (concurrent removal). */
-  private async orNotFound<T>(write: Promise<T>): Promise<T> {
-    try {
-      return await write;
-    } catch (error) {
-      if (isRecordNotFound(error)) {
-        throw new NotFoundException('Member not found');
-      }
-      throw error;
-    }
   }
 }

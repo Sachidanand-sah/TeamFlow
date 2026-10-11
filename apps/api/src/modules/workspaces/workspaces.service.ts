@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { WorkspaceDto, WorkspaceRole } from '@teamflow/shared';
 import { Workspace } from '../../generated/prisma/client';
-import { isRecordNotFound } from '../../prisma/prisma-errors';
+import { orNotFound } from '../../prisma/prisma-errors';
+
+const WORKSPACE_NOT_FOUND = 'Workspace not found';
 import { WorkspaceMember } from './workspace-member';
 import { WorkspacesRepository } from './workspaces.repository';
 
@@ -50,25 +52,18 @@ export class WorkspacesService {
   }
 
   async rename(member: WorkspaceMember, name: string): Promise<WorkspaceDto> {
+    // orNotFound: the workspace may be deleted between the guard's check and the write.
     const workspace = await orNotFound(
       this.workspaces.rename(member.workspaceId, name.trim()),
+      WORKSPACE_NOT_FOUND,
     );
     return toWorkspaceDto(workspace, member.role);
   }
 
   delete(member: WorkspaceMember): Promise<void> {
-    return orNotFound(this.workspaces.delete(member.workspaceId));
-  }
-}
-
-/** The workspace was deleted by someone else between the guard's check and the write. */
-async function orNotFound<T>(write: Promise<T>): Promise<T> {
-  try {
-    return await write;
-  } catch (error) {
-    if (isRecordNotFound(error)) {
-      throw new NotFoundException('Workspace not found');
-    }
-    throw error;
+    return orNotFound(
+      this.workspaces.delete(member.workspaceId),
+      WORKSPACE_NOT_FOUND,
+    );
   }
 }
