@@ -1,0 +1,48 @@
+// TeamFlow database schema.
+// Change it, then run `npx prisma migrate dev --name <change>`. Never edit tables by hand.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  // The API is compiled to CommonJS by Nx/webpack.
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  /// Always stored lower-cased and trimmed (normalised in the service layer).
+  email        String   @unique
+  name         String
+  /// argon2id hash. The plain password is never stored or logged.
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+/// One row per issued refresh token. Tokens issued by rotating each other share a
+/// familyId, so presenting an already-used token can revoke the whole chain.
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  familyId  String    @map("family_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  /// SHA-256 of the random token. The raw token only ever lives in the cookie.
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  /// Set when the token is rotated (used) or revoked (logout / reuse detected).
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([familyId])
+  @@index([userId])
+  @@map("refresh_tokens")
+}

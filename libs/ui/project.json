@@ -4,7 +4,7 @@
   "sourceRoot": "libs/ui/src",
   "prefix": "tf",
   "projectType": "library",
-  "tags": [],
+  "tags": ["scope:web", "type:ui"],
   "targets": {
     "lint": {
       "inputs": [
