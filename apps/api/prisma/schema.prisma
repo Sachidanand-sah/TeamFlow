@@ -23,8 +23,48 @@ model User {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   refreshTokens RefreshToken[]
+  memberships   Membership[]
 
   @@map("users")
+}
+
+/// Ordered from most to least privileged. Ranks live in @teamflow/shared.
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+/// The tenant boundary: every project, task and comment will belong to one workspace.
+model Workspace {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  memberships Membership[]
+
+  @@map("workspaces")
+}
+
+/// A user's role in one workspace. Access to workspace data is decided by this row.
+model Membership {
+  id          String        @id @default(uuid()) @db.Uuid
+  workspaceId String        @map("workspace_id") @db.Uuid
+  userId      String        @map("user_id") @db.Uuid
+  role        WorkspaceRole
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// One membership per user per workspace; also serves "is X a member of W?" lookups.
+  @@unique([workspaceId, userId])
+  /// "Which workspaces is X in?" (the workspace switcher).
+  @@index([userId])
+  @@map("memberships")
 }
 
 /// One row per issued refresh token. Tokens issued by rotating each other share a

@@ -13,3 +13,14 @@ export function isUniqueConstraintViolation(error: unknown): boolean {
     error.code === 'P2002'
   );
 }
+
+/**
+ * True when an update/delete matched no row (Prisma P2025), e.g. because another
+ * request deleted it between our read and our write.
+ */
+export function isRecordNotFound(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === 'P2025'
+  );
+}
