@@ -5,6 +5,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { validateEnv } from '../config/env.validation';
 import { AuthModule } from '../modules/auth/auth.module';
 import { ProjectsModule } from '../modules/projects/projects.module';
+import { TasksModule } from '../modules/tasks/tasks.module';
 import { UsersModule } from '../modules/users/users.module';
 import { WorkspacesModule } from '../modules/workspaces/workspaces.module';
 import { PrismaModule } from '../prisma/prisma.module';
@@ -24,6 +25,7 @@ import { HealthController } from './health.controller';
     AuthModule,
     WorkspacesModule,
     ProjectsModule,
+    TasksModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

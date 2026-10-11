@@ -10,6 +10,10 @@ role get **403**.
 | Action                               | VIEWER | MEMBER | ADMIN | OWNER |
 | ------------------------------------ | :----: | :----: | :---: | :---: |
 | View workspace, members, projects    |   ✓    |   ✓    |   ✓   |   ✓   |
+| View tasks and the board             |   ✓    |   ✓    |   ✓   |   ✓   |
+| Create, edit, assign, move tasks     |        |   ✓    |   ✓   |   ✓   |
+| Delete a task you reported           |        |   ✓    |   ✓   |   ✓   |
+| Delete any task                      |        |        |   ✓   |   ✓   |
 | Leave workspace                      |   ✓    |   ✓    |   ✓   |       |
 | Rename workspace                     |        |        |   ✓   |   ✓   |
 | Add / change / remove MEMBER, VIEWER |        |        |   ✓   |   ✓   |
@@ -22,6 +26,5 @@ Rules that a table cannot show:
 - Nobody can change their own role.
 - OWNER is never granted through the API (ownership transfer is not built yet).
 - A project's key cannot be changed after creation (task ids depend on it).
-
-Tasks and comments (MVP steps 4-5) will add rows here: MEMBER and above will be able
-to create and edit tasks; VIEWER stays read-only.
+- A task can only be assigned to a current member of the same workspace. When a
+  member leaves, their tasks in that workspace become unassigned automatically.

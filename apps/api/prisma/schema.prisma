@@ -24,6 +24,7 @@ model User {
 
   refreshTokens RefreshToken[]
   memberships   Membership[]
+  reportedTasks Task[]
 
   @@map("users")
 }
@@ -45,6 +46,7 @@ model Workspace {
 
   memberships Membership[]
   projects    Project[]
+  tasks       Task[]
 
   @@map("workspaces")
 }
@@ -56,15 +58,68 @@ model Project {
   key         String
   name        String
   description String?
+  /// Last task number handed out (TF-1, TF-2, ...). Incremented in the same
+  /// transaction that creates a task, so numbers are never reused or duplicated.
+  taskCounter Int      @default(0) @map("task_counter")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  tasks     Task[]
 
   /// Keys are unique per workspace (two teams can both have "WEB").
   /// The index also serves "list projects of workspace W".
   @@unique([workspaceId, key])
   @@map("projects")
+}
+
+/// Kanban columns, in board order.
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Task {
+  id                   String       @id @default(uuid()) @db.Uuid
+  /// Denormalised from the project so every task query can filter by tenant directly.
+  workspaceId          String       @map("workspace_id") @db.Uuid
+  projectId            String       @map("project_id") @db.Uuid
+  /// Per-project sequence: shown as "<project key>-<number>", e.g. WEB-12.
+  number               Int
+  title                String
+  description          String?
+  status               TaskStatus   @default(TODO)
+  priority             TaskPriority @default(MEDIUM)
+  /// Order inside its status column (0 = top). Rewritten for the column on each move.
+  position             Int
+  /// The assignee's MEMBERSHIP (not user): when they leave the workspace the
+  /// membership row is deleted and Postgres sets this to NULL automatically.
+  assigneeMembershipId String?      @map("assignee_membership_id") @db.Uuid
+  /// Who created the task. Kept (as NULL) if that account is deleted.
+  reporterId           String?      @map("reporter_id") @db.Uuid
+  createdAt            DateTime     @default(now()) @map("created_at")
+  updatedAt            DateTime     @updatedAt @map("updated_at")
+
+  workspace Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee  Membership? @relation(fields: [assigneeMembershipId], references: [id], onDelete: SetNull)
+  reporter  User?       @relation(fields: [reporterId], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, number])
+  /// Serves the board query: one project's tasks, grouped by column, in order.
+  @@index([projectId, status, position])
+  @@index([workspaceId])
+  @@index([assigneeMembershipId])
+  @@map("tasks")
 }
 
 /// A user's role in one workspace. Access to workspace data is decided by this row.
@@ -76,8 +131,9 @@ model Membership {
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedTasks Task[]
 
   /// One membership per user per workspace; also serves "is X a member of W?" lookups.
   @@unique([workspaceId, userId])
