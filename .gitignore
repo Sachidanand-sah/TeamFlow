@@ -24,6 +24,14 @@ node_modules
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# environment (secrets) — only .env.example is committed
+.env
+.env.*
+!.env.example
+
+# generated Prisma client
+apps/api/src/generated
+
 # misc
 /.sass-cache
 /connect.lock

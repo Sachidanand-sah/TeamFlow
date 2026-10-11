@@ -21,3 +21,77 @@
 - The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
 
 <!-- nx configuration end-->
+
+# TeamFlow
+
+Team project-management platform (mini Jira/Trello). Learning project for a full-stack
+engineer: code quality, architecture and security matter more than speed.
+
+## Tech stack
+
+- Monorepo: Nx
+- Frontend: Angular (standalone components, signals, RxJS), in `apps/web`
+- Backend: NestJS, in `apps/api`
+- Shared types and DTO interfaces: `libs/shared` (import as `@teamflow/shared`)
+- Design-system components: `libs/ui` (import as `@teamflow/ui`)
+- Database: PostgreSQL with Prisma (migrations only, never edit tables by hand)
+- Cache and queues: Redis + BullMQ
+- Real-time: NestJS WebSocket gateway (Socket.IO)
+- File storage: S3-compatible (MinIO locally)
+- Tests: Jest (unit), Playwright (e2e)
+- Local infra: docker-compose (postgres, redis, minio)
+
+## Architecture rules
+
+- Modular monolith: one NestJS app, one module per domain
+  (auth, users, workspaces, projects, tasks, comments, notifications, activity).
+- Layering: controller (HTTP only) -> service (business logic) -> repository/Prisma.
+  No business logic in controllers.
+- Every request body is a DTO validated with class-validator.
+- Every workspace-scoped query filters by workspaceId (multi-tenancy). Never trust
+  a workspaceId from the client without checking membership.
+- Angular: feature folders, smart/dumb components, services for API calls,
+  design-system components in `libs/ui`.
+
+## Security rules (non-negotiable)
+
+- Passwords hashed with argon2.
+- Short-lived access token; refresh token rotated on every use, stored hashed in DB,
+  sent only as httpOnly, Secure, SameSite=Strict cookie. Never use localStorage for tokens.
+- Reused refresh token revokes the whole token family.
+- RBAC guard on every protected route (roles: OWNER, ADMIN, MEMBER, VIEWER).
+- Helmet, strict CORS, @nestjs/throttler rate limiting.
+- Secrets only in environment variables; `.env` is gitignored, `.env.example` is committed.
+
+## Code quality
+
+- TypeScript strict mode. No `any`.
+- ESLint + Prettier must pass.
+- Write unit tests for every service method you add.
+- Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`).
+- Small, focused changes. Explain design decisions briefly in the PR description.
+- Record significant decisions in `docs/adr/` (Architecture Decision Records).
+
+## MVP scope (build in this order)
+
+1. Auth: register, login, refresh, logout
+2. Workspaces and membership with roles
+3. Projects
+4. Tasks with Kanban statuses
+5. Comments and activity log
+6. Real-time board updates
+7. File attachments
+8. Email notifications via queue
+
+## How to work with me
+
+I am an Angular developer learning backend. When you write NestJS, database or
+security code, briefly explain WHY it is done that way. Ask before adding a new
+dependency. Do not skip tests.
+
+## Common commands
+
+- `npx nx serve api` / `npx nx serve web` — dev servers (web proxies `/api` to the API)
+- `npx nx run-many -t lint test build` — full check before committing
+- `docker compose up -d` — start postgres, redis, minio
+- `npx prisma migrate dev --name <change>` — create + apply a migration (schema in `apps/api/prisma/schema.prisma`)
