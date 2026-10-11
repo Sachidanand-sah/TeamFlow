@@ -13,6 +13,7 @@ import {
   input,
   OnInit,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import {
@@ -37,6 +38,10 @@ import { catchError, forkJoin, map, Observable, of, switchMap } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { TaskRef } from '../../../core/comments/comments.api';
 import { httpErrorMessage } from '../../../core/http-error-message';
+import {
+  BoardStreamEvent,
+  RealtimeService,
+} from '../../../core/realtime/realtime.service';
 import { TasksApi } from '../../../core/tasks/tasks.api';
 import { WorkspacesApi } from '../../../core/workspaces/workspaces.api';
 import { TaskCard } from '../task-card';
@@ -80,7 +85,10 @@ export class TaskBoard implements OnInit {
   private readonly api = inject(TasksApi);
   private readonly workspacesApi = inject(WorkspacesApi);
   private readonly auth = inject(AuthService);
+  private readonly realtime = inject(RealtimeService);
   private readonly destroyRef = inject(DestroyRef);
+  /** The open panel's comment thread, to forward live comment events to. */
+  private readonly comments = viewChild(TaskComments);
 
   protected readonly statuses = TASK_STATUSES;
   protected readonly labels = TASK_STATUS_LABELS;
@@ -167,6 +175,51 @@ export class TaskBoard implements OnInit {
         this.members.set(result.loaded.members);
         this.loadError.set(null);
       });
+
+    // Live updates from other people working on the same board.
+    this.ids$
+      .pipe(
+        switchMap(([workspaceId, projectId]) =>
+          this.realtime.boardEvents(workspaceId, projectId),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((event) => this.applyLiveEvent(event));
+  }
+
+  private applyLiveEvent(event: BoardStreamEvent): void {
+    switch (event.type) {
+      case 'task.upserted':
+        this.upsert(event.task);
+        break;
+      case 'task.moved':
+        // Our own moves are already applied optimistically. Someone else's move
+        // also renumbered other cards, so reload instead of guessing positions.
+        if (event.actorId !== this.currentUserId()) this.reload();
+        break;
+      case 'task.deleted':
+        this.tasks.update((list) => list.filter((t) => t.id !== event.taskId));
+        if (this.selectedId() === event.taskId) this.closePanel();
+        break;
+      case 'comment.upserted':
+        this.comments()?.upsert(event.comment);
+        break;
+      case 'comment.deleted':
+        this.comments()?.removeLocal(event.commentId);
+        break;
+      case 'resync':
+        this.reload(); // reconnected: we may have missed events
+        break;
+      case 'activity.recorded':
+        break; // the activity feed listens for these itself
+    }
+  }
+
+  private reload(): void {
+    this.api.list(this.workspaceId(), this.projectId()).subscribe({
+      next: (tasks) => this.tasks.set(tasks),
+      error: () => undefined, // keep the current board; the next event retries
+    });
   }
 
   /** cdkDropList data is the column's status; item data is the task. */
@@ -199,7 +252,8 @@ export class TaskBoard implements OnInit {
       })
       .subscribe({
         next: (task) => {
-          this.tasks.update((list) => [...list, task]);
+          // upsert, not append: the live event for this task may have arrived first.
+          this.upsert(task);
           this.quickAdd.reset();
           this.adding.set(false);
         },
@@ -217,7 +271,7 @@ export class TaskBoard implements OnInit {
     }
     this.runPanelAction(
       this.api.update(this.workspaceId(), this.projectId(), task.id, changes),
-      (updated) => this.replace(updated),
+      (updated) => this.upsert(updated),
     );
   }
 
@@ -248,7 +302,7 @@ export class TaskBoard implements OnInit {
     this.api
       .move(this.workspaceId(), this.projectId(), taskId, { status, index })
       .subscribe({
-        next: (moved) => this.replace(moved),
+        next: (moved) => this.upsert(moved),
         error: (error: unknown) => {
           this.tasks.set(previous); // roll back the optimistic move
           this.boardError.set(httpErrorMessage(error, TASK_ERRORS));
@@ -256,9 +310,12 @@ export class TaskBoard implements OnInit {
       });
   }
 
-  private replace(updated: TaskDto): void {
+  /** Insert or replace by id: safe whichever of HTTP response / live event comes first. */
+  private upsert(task: TaskDto): void {
     this.tasks.update((list) =>
-      list.map((t) => (t.id === updated.id ? updated : t)),
+      list.some((t) => t.id === task.id)
+        ? list.map((t) => (t.id === task.id ? task : t))
+        : [...list, task],
     );
   }
 

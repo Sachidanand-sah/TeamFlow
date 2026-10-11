@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule } from './app/app.module';
 import { EnvironmentVariables } from './config/env.validation';
+import { CorsIoAdapter } from './modules/realtime/cors-io.adapter';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
@@ -16,10 +17,10 @@ async function bootstrap(): Promise<void> {
   // Parses the Cookie header so the refresh-token cookie can be read.
   app.use(cookieParser());
   // Only the configured web origin may call the API with credentials (cookies).
-  app.enableCors({
-    origin: config.get('CORS_ORIGIN', { infer: true }),
-    credentials: true,
-  });
+  const corsOrigin = config.get('CORS_ORIGIN', { infer: true });
+  app.enableCors({ origin: corsOrigin, credentials: true });
+  // Same CORS rule for the Socket.IO real-time endpoint.
+  app.useWebSocketAdapter(new CorsIoAdapter(app, corsOrigin));
   app.useGlobalPipes(
     new ValidationPipe({
       // Strip properties without decorators and reject requests that send them, so

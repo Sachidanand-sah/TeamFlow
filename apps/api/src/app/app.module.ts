@@ -8,6 +8,7 @@ import { ActivityModule } from '../modules/activity/activity.module';
 import { AuthModule } from '../modules/auth/auth.module';
 import { CommentsModule } from '../modules/comments/comments.module';
 import { ProjectsModule } from '../modules/projects/projects.module';
+import { RealtimeModule } from '../modules/realtime/realtime.module';
 import { TasksModule } from '../modules/tasks/tasks.module';
 import { UsersModule } from '../modules/users/users.module';
 import { WorkspacesModule } from '../modules/workspaces/workspaces.module';
@@ -32,6 +33,7 @@ import { HealthController } from './health.controller';
     TasksModule,
     ActivityModule,
     CommentsModule,
+    RealtimeModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

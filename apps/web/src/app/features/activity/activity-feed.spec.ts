@@ -1,7 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivityDto } from '@teamflow/shared';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { ActivityApi } from '../../core/activity/activity.api';
+import {
+  BoardStreamEvent,
+  RealtimeService,
+} from '../../core/realtime/realtime.service';
 import { ActivityFeed } from './activity-feed';
 
 const entry = (id: string): ActivityDto => ({
@@ -29,12 +33,46 @@ describe('ActivityFeed', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
+  let live: Subject<BoardStreamEvent>;
+
   beforeEach(() => {
     api = { list: jest.fn() };
+    live = new Subject<BoardStreamEvent>();
     TestBed.configureTestingModule({
       imports: [ActivityFeed],
-      providers: [{ provide: ActivityApi, useValue: api }],
+      providers: [
+        { provide: ActivityApi, useValue: api },
+        { provide: RealtimeService, useValue: { boardEvents: () => live } },
+      ],
     });
+  });
+
+  it('shows activity recorded by others live, newest first', async () => {
+    api.list.mockReturnValue(of({ items: [entry('a-1')], nextCursor: null }));
+    const el = await render();
+
+    live.next({
+      type: 'activity.recorded',
+      activity: {
+        ...entry('a-2'),
+        type: 'TASK_CREATED',
+        data: { title: 'New' },
+      },
+      projectId: 'p-1',
+      actorId: 'u-1',
+    });
+    fixture.detectChanges();
+
+    expect(el.querySelector('li')?.textContent).toContain('created WEB-3');
+  });
+
+  it('reloads after a reconnect', async () => {
+    api.list.mockReturnValue(of({ items: [], nextCursor: null }));
+    await render();
+
+    live.next({ type: 'resync' });
+
+    expect(api.list).toHaveBeenCalledTimes(2);
   });
 
   it('shows entries as sentences', async () => {

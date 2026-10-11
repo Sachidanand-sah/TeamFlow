@@ -3,10 +3,11 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { ProjectDto, WorkspaceDto, WorkspaceRole } from '@teamflow/shared';
-import { of, throwError } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { ActivityApi } from '../../../core/activity/activity.api';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ProjectsApi } from '../../../core/projects/projects.api';
+import { RealtimeService } from '../../../core/realtime/realtime.service';
 import { TasksApi } from '../../../core/tasks/tasks.api';
 import { WorkspacesApi } from '../../../core/workspaces/workspaces.api';
 import { ProjectDetailPage } from './project-detail.page';
@@ -66,6 +67,7 @@ describe('ProjectDetailPage', () => {
         { provide: WorkspacesApi, useValue: workspacesApi },
         // The embedded board has its own spec; here it renders an empty board.
         { provide: TasksApi, useValue: { list: () => of([]) } },
+        { provide: RealtimeService, useValue: { boardEvents: () => NEVER } },
         {
           provide: ActivityApi,
           useValue: { list: () => of({ items: [], nextCursor: null }) },

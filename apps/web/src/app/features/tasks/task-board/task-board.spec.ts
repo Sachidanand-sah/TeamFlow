@@ -11,6 +11,10 @@ import {
 import { of, Subject, throwError } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { CommentsApi } from '../../../core/comments/comments.api';
+import {
+  BoardStreamEvent,
+  RealtimeService,
+} from '../../../core/realtime/realtime.service';
 import { TasksApi } from '../../../core/tasks/tasks.api';
 import { WorkspacesApi } from '../../../core/workspaces/workspaces.api';
 import { TaskBoard } from './task-board';
@@ -95,6 +99,14 @@ describe('TaskBoard', () => {
     fixture.detectChanges();
   }
 
+  let live: Subject<BoardStreamEvent>;
+
+  /** Delivers a live event as if another user had caused it. */
+  function liveEvent(event: BoardStreamEvent) {
+    live.next(event);
+    fixture.detectChanges();
+  }
+
   beforeEach(() => {
     api = {
       list: jest.fn(),
@@ -103,10 +115,12 @@ describe('TaskBoard', () => {
       move: jest.fn(),
       delete: jest.fn(),
     };
+    live = new Subject<BoardStreamEvent>();
     TestBed.configureTestingModule({
       imports: [TaskBoard],
       providers: [
         { provide: TasksApi, useValue: api },
+        { provide: RealtimeService, useValue: { boardEvents: () => live } },
         // The panel's comment thread has its own spec; here it is empty.
         { provide: CommentsApi, useValue: { list: () => of([]) } },
         {
@@ -263,5 +277,95 @@ describe('TaskBoard', () => {
     expect(api.delete).toHaveBeenCalledWith('ws-1', 'p-1', '1');
     expect(columnTitles(el, 'TODO')).toEqual([]);
     expect(el.querySelector('.panel')).toBeNull();
+  });
+
+  describe('live updates', () => {
+    const base = { projectId: 'p-1', actorId: 'bob' };
+
+    it('adds and updates tasks created or edited by others', async () => {
+      const el = await render('VIEWER', [task('1', 'TODO', 0)]);
+
+      liveEvent({ ...base, type: 'task.upserted', task: task('2', 'TODO', 1) });
+      liveEvent({
+        ...base,
+        type: 'task.upserted',
+        task: { ...task('1', 'TODO', 0), title: 'Renamed by Bob' },
+      });
+
+      expect(columnTitles(el, 'TODO')).toEqual(['Renamed by Bob', 'Task 2']);
+    });
+
+    it("reloads the board after someone else's move", async () => {
+      await render('VIEWER', [task('1', 'TODO', 0)]);
+      api.list.mockReturnValue(of([task('1', 'DONE', 0)]));
+
+      liveEvent({
+        ...base,
+        type: 'task.moved',
+        taskId: '1',
+        status: 'DONE',
+        index: 0,
+      });
+
+      expect(api.list).toHaveBeenCalledTimes(2);
+    });
+
+    it('ignores the echo of its own move', async () => {
+      await render('MEMBER', [task('1', 'TODO', 0)]);
+
+      liveEvent({
+        ...base,
+        actorId: 'me',
+        type: 'task.moved',
+        taskId: '1',
+        status: 'DONE',
+        index: 0,
+      });
+
+      expect(api.list).toHaveBeenCalledTimes(1);
+    });
+
+    it('removes a deleted task and closes its open panel', async () => {
+      const el = await render('VIEWER', [task('1', 'TODO', 0)]);
+      el.querySelector<HTMLElement>('tf-task-card')?.click();
+      fixture.detectChanges();
+      expect(el.querySelector('.panel')).not.toBeNull();
+
+      liveEvent({ ...base, type: 'task.deleted', taskId: '1' });
+
+      expect(columnTitles(el, 'TODO')).toEqual([]);
+      expect(el.querySelector('.panel')).toBeNull();
+    });
+
+    it('reloads after a reconnect (resync)', async () => {
+      await render('VIEWER', []);
+
+      liveEvent({ type: 'resync' });
+
+      expect(api.list).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not duplicate a task whose live event beat the HTTP response', async () => {
+      const el = await render('MEMBER', []);
+      const created = task('9', 'TODO', 0);
+      const response = new Subject<TaskDto>();
+      api.create.mockReturnValue(response);
+
+      const input = el.querySelector<HTMLInputElement>('#quick-add-title');
+      if (!input) throw new Error('quick add missing');
+      input.value = 'Task 9';
+      input.dispatchEvent(new Event('input'));
+      el.querySelector('.quick-add')?.dispatchEvent(new Event('submit'));
+      liveEvent({
+        ...base,
+        actorId: 'me',
+        type: 'task.upserted',
+        task: created,
+      });
+      response.next(created);
+      fixture.detectChanges();
+
+      expect(columnTitles(el, 'TODO')).toEqual(['Task 9']);
+    });
   });
 });

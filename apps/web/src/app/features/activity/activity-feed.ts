@@ -10,8 +10,17 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivityDto, describeActivity } from '@teamflow/shared';
-import { catchError, map, of, switchMap } from 'rxjs';
+import {
+  catchError,
+  combineLatest,
+  map,
+  of,
+  startWith,
+  Subject,
+  switchMap,
+} from 'rxjs';
 import { ActivityApi } from '../../core/activity/activity.api';
+import { RealtimeService } from '../../core/realtime/realtime.service';
 import { httpErrorMessage } from '../../core/http-error-message';
 import { relativeTime } from '../../core/relative-time';
 
@@ -89,7 +98,9 @@ export class ActivityFeed implements OnInit {
   readonly projectId = input.required<string>();
 
   private readonly api = inject(ActivityApi);
+  private readonly realtime = inject(RealtimeService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly reload$ = new Subject<void>();
 
   protected readonly items = signal<ActivityDto[]>([]);
   protected readonly nextCursor = signal<string | null>(null);
@@ -105,8 +116,22 @@ export class ActivityFeed implements OnInit {
   );
 
   ngOnInit(): void {
+    // Live: new entries go on top; after a reconnect, reload the first page.
     this.ids$
       .pipe(
+        switchMap(([workspaceId, projectId]) =>
+          this.realtime.boardEvents(workspaceId, projectId),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((event) => {
+        if (event.type === 'activity.recorded') this.prepend(event.activity);
+        if (event.type === 'resync') this.reload$.next();
+      });
+
+    combineLatest([this.ids$, this.reload$.pipe(startWith(undefined))])
+      .pipe(
+        map(([ids]) => ids),
         switchMap(([workspaceId, projectId]) =>
           this.api.list(workspaceId, projectId).pipe(
             map((page) => ({ page })),
