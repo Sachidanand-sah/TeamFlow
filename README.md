@@ -22,7 +22,7 @@ Nx monorepo with an Angular frontend and a NestJS API on PostgreSQL (Prisma).
 - [x] Tasks with Kanban statuses (drag-and-drop board, assignees, priorities)
 - [x] Comments and activity log
 - [x] Real-time board updates ([ADR 0004](docs/adr/0004-realtime-board-updates.md))
-- [ ] File attachments
+- [x] File attachments ([ADR 0005](docs/adr/0005-attachments-presigned-uploads.md))
 - [ ] Email notifications via queue
 
 ## Getting started

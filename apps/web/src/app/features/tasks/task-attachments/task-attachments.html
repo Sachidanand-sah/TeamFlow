@@ -1,0 +1,58 @@
+<h3 class="title">Attachments</h3>
+
+@if (loading()) {
+  <p class="muted">Loading files…</p>
+} @else {
+  @if (files().length === 0) {
+    <p class="muted">No files attached.</p>
+  }
+  <ul class="files">
+    @for (file of files(); track file.id) {
+      <li class="file">
+        <button
+          type="button"
+          class="file__name"
+          [title]="'Download ' + file.fileName"
+          (click)="download(file)"
+        >
+          {{ file.fileName }}
+        </button>
+        <span class="muted">{{ formatFileSize(file.size) }}</span>
+        @if (canDelete(file)) {
+          <button
+            type="button"
+            class="file__delete"
+            [attr.aria-label]="'Delete ' + file.fileName"
+            (click)="remove(file)"
+          >
+            ×
+          </button>
+        }
+      </li>
+    }
+  </ul>
+}
+
+@if (progress() !== null) {
+  <div class="progress" role="status">
+    <progress max="100" [value]="progress()"></progress>
+    Uploading… {{ progress() }}%
+  </div>
+}
+
+@if (error(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+}
+
+@if (canUpload() && progress() === null) {
+  <label class="upload">
+    <input
+      type="file"
+      class="visually-hidden"
+      [accept]="accept"
+      (change)="onFileSelected($event)"
+    />
+    <span>+ Attach a file</span>
+    <span class="muted">(max {{ maxSize }})</span>
+  </label>
+}

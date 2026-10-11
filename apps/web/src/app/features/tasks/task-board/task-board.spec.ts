@@ -10,6 +10,7 @@ import {
 } from '@teamflow/shared';
 import { of, Subject, throwError } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
+import { AttachmentsApi } from '../../../core/attachments/attachments.api';
 import { CommentsApi } from '../../../core/comments/comments.api';
 import {
   BoardStreamEvent,
@@ -123,6 +124,7 @@ describe('TaskBoard', () => {
         { provide: RealtimeService, useValue: { boardEvents: () => live } },
         // The panel's comment thread has its own spec; here it is empty.
         { provide: CommentsApi, useValue: { list: () => of([]) } },
+        { provide: AttachmentsApi, useValue: { list: () => of([]) } },
         {
           provide: WorkspacesApi,
           useValue: { listMembers: () => of(members) },

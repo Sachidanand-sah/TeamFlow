@@ -17,6 +17,9 @@ role get **403**.
 | Read comments and project activity   |   ✓    |   ✓    |   ✓   |   ✓   |
 | Comment; edit/delete own comments    |        |   ✓    |   ✓   |   ✓   |
 | Delete anyone's comment (moderation) |        |        |   ✓   |   ✓   |
+| View and download attachments        |   ✓    |   ✓    |   ✓   |   ✓   |
+| Upload; delete own attachments       |        |   ✓    |   ✓   |   ✓   |
+| Delete anyone's attachment           |        |        |   ✓   |   ✓   |
 | Leave workspace                      |   ✓    |   ✓    |   ✓   |       |
 | Rename workspace                     |        |        |   ✓   |   ✓   |
 | Add / change / remove MEMBER, VIEWER |        |        |   ✓   |   ✓   |

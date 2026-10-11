@@ -44,6 +44,7 @@ import {
 } from '../../../core/realtime/realtime.service';
 import { TasksApi } from '../../../core/tasks/tasks.api';
 import { WorkspacesApi } from '../../../core/workspaces/workspaces.api';
+import { TaskAttachments } from '../task-attachments/task-attachments';
 import { TaskCard } from '../task-card';
 import { TaskComments } from '../task-comments/task-comments';
 import { TaskPanel } from '../task-panel/task-panel';
@@ -69,6 +70,7 @@ const TASK_ERRORS = {
     CdkDropList,
     CdkDrag,
     ReactiveFormsModule,
+    TaskAttachments,
     TaskCard,
     TaskComments,
     TaskPanel,
