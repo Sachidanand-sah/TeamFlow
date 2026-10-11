@@ -86,7 +86,11 @@ describe('TaskAttachments', () => {
 
   it('runs announce -> upload -> complete and adds the file', async () => {
     const el = await render('MEMBER');
-    const upload = { url: 'http://s3/bucket', fields: { key: 'k' } };
+    const upload = {
+      url: 'http://s3/bucket/k',
+      method: 'PUT' as const,
+      headers: { 'Content-Type': 'application/pdf' },
+    };
     api.create.mockReturnValue(of({ attachment: attachment('a-9'), upload }));
     api.uploadToStorage.mockReturnValue(of({ percent: 100 }, { done: true }));
     api.complete.mockReturnValue(of(attachment('a-9')));
@@ -127,7 +131,10 @@ describe('TaskAttachments', () => {
   it('explains a failed verification', async () => {
     const el = await render('MEMBER');
     api.create.mockReturnValue(
-      of({ attachment: attachment('a-9'), upload: { url: 'u', fields: {} } }),
+      of({
+        attachment: attachment('a-9'),
+        upload: { url: 'u', method: 'PUT', headers: {} },
+      }),
     );
     api.uploadToStorage.mockReturnValue(of({ done: true }));
     api.complete.mockReturnValue(

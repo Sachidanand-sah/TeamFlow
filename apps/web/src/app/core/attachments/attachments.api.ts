@@ -1,4 +1,9 @@
-import { HttpClient, HttpEvent, HttpEventType } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpEvent,
+  HttpEventType,
+  HttpHeaders,
+} from '@angular/common/http';
 import { inject, Injectable, InjectionToken } from '@angular/core';
 import {
   AllowedAttachmentType,
@@ -40,21 +45,21 @@ export class AttachmentsApi {
   }
 
   /**
-   * Step 2: send the bytes straight to object storage. The URL is not under /api,
-   * so the auth interceptor does not attach our access token to it.
-   * The file must be the LAST form field for S3 POST policies.
+   * Step 2: PUT the raw bytes straight to object storage with exactly the signed
+   * headers. The URL is not under /api, so the auth interceptor does not attach our
+   * access token to it.
    */
   uploadToStorage(
     upload: PresignedUpload,
     file: Blob,
   ): Observable<UploadProgress> {
-    const form = new FormData();
-    for (const [name, value] of Object.entries(upload.fields)) {
-      form.append(name, value);
-    }
-    form.append('file', file);
     return this.http
-      .post(upload.url, form, { reportProgress: true, observe: 'events' })
+      .request(upload.method, upload.url, {
+        body: file,
+        headers: new HttpHeaders(upload.headers),
+        reportProgress: true,
+        observe: 'events',
+      })
       .pipe(
         filter(
           (e: HttpEvent<unknown>) =>

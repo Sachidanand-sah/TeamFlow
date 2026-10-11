@@ -56,6 +56,20 @@ export class EnvironmentVariables {
   @Max(90)
   REFRESH_TOKEN_TTL_DAYS = 7;
 
+  /** true when a reverse proxy (e.g. Render) sits in front; see main.ts. */
+  @Transform(
+    ({ value }: { value: unknown }) => value === true || value === 'true',
+  )
+  @IsBoolean()
+  TRUST_PROXY = false;
+
+  /** true in production: the API also serves the built Angular app (one origin). */
+  @Transform(
+    ({ value }: { value: unknown }) => value === true || value === 'true',
+  )
+  @IsBoolean()
+  SERVE_WEB_APP = false;
+
   /** Exact origin of the web app; CORS allows only this one. */
   @IsUrl({ require_tld: false, require_protocol: true })
   CORS_ORIGIN = 'http://localhost:4200';

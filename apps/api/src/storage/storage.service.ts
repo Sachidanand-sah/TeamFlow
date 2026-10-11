@@ -6,9 +6,9 @@ import {
   HeadBucketCommand,
   HeadObjectCommand,
   ListObjectsV2Command,
+  PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
-import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -43,8 +43,13 @@ export class StorageService implements OnModuleInit {
     this.client = new S3Client({
       endpoint: config.get('S3_ENDPOINT', { infer: true }),
       region: config.get('S3_REGION', { infer: true }),
-      // MinIO serves buckets as paths (host/bucket/key), not subdomains.
+      // MinIO/Supabase serve buckets as paths (host/bucket/key), not subdomains.
       forcePathStyle: true,
+      // Recent SDK versions add CRC32 checksums to uploads by default. Browsers
+      // uploading through a presigned URL cannot send them, and several
+      // S3-compatible services reject them, so only add checksums where required.
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
       credentials: {
         accessKeyId: config.get('S3_ACCESS_KEY', { infer: true }),
         secretAccessKey: config.get('S3_SECRET_KEY', { infer: true }),
@@ -78,26 +83,50 @@ export class StorageService implements OnModuleInit {
   }
 
   /**
-   * A signed POST policy for exactly one object. Storage rejects the upload unless
-   * the size and Content-Type match, so the client cannot swap in a larger or
-   * different file than it declared.
+   * A presigned PUT for exactly one object.
+   *
+   * Content-Type, Content-Length and Content-Disposition are part of the SIGNATURE,
+   * so storage rejects the upload if the browser sends a different type, a different
+   * size, or tries to change how the file is served. (The browser sets
+   * Content-Length itself from the file, so a bigger file breaks the signature.)
+   *
+   * WHY PUT and not a POST policy: presigned PUT works on every S3-compatible service
+   * (AWS, MinIO, Supabase Storage, Cloudflare R2); POST policies do not.
    */
   async createUpload(
     key: string,
     contentType: string,
     size: number,
+    fileName: string,
   ): Promise<PresignedUpload> {
-    const { url, fields } = await createPresignedPost(this.client, {
-      Bucket: this.bucket,
-      Key: key,
-      Conditions: [
-        ['content-length-range', size, size],
-        ['eq', '$Content-Type', contentType],
-      ],
-      Fields: { 'Content-Type': contentType },
-      Expires: UPLOAD_URL_TTL_SECONDS,
-    });
-    return { url, fields };
+    const disposition = contentDisposition(fileName);
+    const url = await getSignedUrl(
+      this.client,
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        ContentType: contentType,
+        ContentLength: size,
+        // Stored with the object, so every later download is "save as", never inline.
+        ContentDisposition: disposition,
+      }),
+      {
+        expiresIn: UPLOAD_URL_TTL_SECONDS,
+        signableHeaders: new Set([
+          'content-type',
+          'content-length',
+          'content-disposition',
+        ]),
+      },
+    );
+    return {
+      url,
+      method: 'PUT',
+      headers: {
+        'Content-Type': contentType,
+        'Content-Disposition': disposition,
+      },
+    };
   }
 
   /** Size and type of a stored object, or null if it does not exist. */
@@ -117,18 +146,16 @@ export class StorageService implements OnModuleInit {
   }
 
   /**
-   * Short-lived download link that forces "save as" with the original name.
-   * WHY `attachment`: even an allowed type should never be rendered inline on the
-   * storage origin; downloading is the safe default for user-supplied files.
+   * Short-lived download link. The object was stored with
+   * `Content-Disposition: attachment` (see createUpload), so it downloads as a file
+   * with its original name instead of rendering inline on the storage origin.
+   * (Not using the `response-content-disposition` override: not every
+   * S3-compatible service documents support for it.)
    */
-  downloadUrl(key: string, fileName: string): Promise<string> {
+  downloadUrl(key: string): Promise<string> {
     return getSignedUrl(
       this.client,
-      new GetObjectCommand({
-        Bucket: this.bucket,
-        Key: key,
-        ResponseContentDisposition: contentDisposition(fileName),
-      }),
+      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
       { expiresIn: DOWNLOAD_URL_TTL_SECONDS },
     );
   }

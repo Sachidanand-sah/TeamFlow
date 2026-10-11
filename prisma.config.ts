@@ -15,6 +15,9 @@ export default defineConfig({
     path: 'apps/api/prisma/migrations',
   },
   datasource: {
-    url: process.env['DATABASE_URL'],
+    // The CLI (migrations) prefers a DIRECT connection: hosted Postgres such as Neon
+    // hands the app a pooled URL (PgBouncer), and schema changes should not go
+    // through a transaction pooler. The running app always uses DATABASE_URL.
+    url: process.env['DIRECT_URL'] || process.env['DATABASE_URL'],
   },
 });

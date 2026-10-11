@@ -50,22 +50,32 @@ describe('AttachmentsApi', () => {
     req.flush({});
   });
 
-  it('uploads to storage with policy fields first, the file last, and no token', () => {
+  it('PUTs the raw file to storage with the signed headers and no token', () => {
     const events: UploadProgress[] = [];
     const file = new Blob(['hello'], { type: 'text/plain' });
     api
       .uploadToStorage(
         {
-          url: 'http://localhost:9000/bucket',
-          fields: { key: 'k', Policy: 'p' },
+          url: 'http://localhost:9000/bucket/k?X-Amz-Signature=s',
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'text/plain',
+            'Content-Disposition': 'attachment; filename="a.txt"',
+          },
         },
         file,
       )
       .subscribe((e) => events.push(e));
 
-    const req = http.expectOne('http://localhost:9000/bucket');
-    const body = req.request.body as FormData;
-    expect(Array.from(body.keys())).toEqual(['key', 'Policy', 'file']);
+    const req = http.expectOne(
+      'http://localhost:9000/bucket/k?X-Amz-Signature=s',
+    );
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toBe(file);
+    expect(req.request.headers.get('Content-Type')).toBe('text/plain');
+    expect(req.request.headers.get('Content-Disposition')).toBe(
+      'attachment; filename="a.txt"',
+    );
     expect(req.request.headers.has('Authorization')).toBe(false);
     req.event({ type: 1, loaded: 50, total: 100 }); // UploadProgress
     req.flush(null, { status: 204, statusText: 'No Content' });

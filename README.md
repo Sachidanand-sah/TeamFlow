@@ -27,6 +27,12 @@ Redis/BullMQ, Socket.IO and S3-compatible storage.
 - [x] File attachments ([ADR 0005](docs/adr/0005-attachments-presigned-uploads.md))
 - [x] Email notifications via queue ([ADR 0006](docs/adr/0006-notifications-queue.md))
 
+## Deploying for free
+
+Render (app + Redis), Neon (Postgres), Supabase (files) and Brevo (email), all on free
+tiers: see **[docs/deployment.md](docs/deployment.md)** and
+[ADR 0007](docs/adr/0007-free-tier-deployment.md). `render.yaml` is the Render Blueprint.
+
 ## Getting started
 
 Requirements: Node.js 22+ and Docker Desktop.

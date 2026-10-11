@@ -116,6 +116,7 @@ export class AttachmentsService implements OnModuleInit, OnModuleDestroy {
       storageKey,
       request.contentType,
       request.size,
+      row.fileName,
     );
     return { attachment: toAttachmentDto(row), upload };
   }
@@ -162,7 +163,7 @@ export class AttachmentsService implements OnModuleInit, OnModuleDestroy {
       throw new NotFoundException(ATTACHMENT_NOT_FOUND);
     }
     return {
-      url: await this.storage.downloadUrl(row.storageKey, row.fileName),
+      url: await this.storage.downloadUrl(row.storageKey),
     };
   }
 

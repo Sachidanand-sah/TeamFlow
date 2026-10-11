@@ -64,13 +64,14 @@ export interface CreateAttachmentRequest {
 }
 
 /**
- * Where and how the browser uploads the file: a multipart POST of `fields` plus the
- * file (as the LAST field, named "file") to `url`. Storage itself enforces the size
- * and content type written into the signed policy.
+ * Where and how the browser uploads the file: a PUT of the raw file to `url` with
+ * exactly these `headers`. Type, size and disposition are part of the signature, so
+ * storage rejects anything else.
  */
 export interface PresignedUpload {
   url: string;
-  fields: Record<string, string>;
+  method: 'PUT';
+  headers: Record<string, string>;
 }
 
 export interface CreateAttachmentResponse {

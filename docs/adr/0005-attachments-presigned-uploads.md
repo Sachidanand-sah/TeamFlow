@@ -13,19 +13,23 @@ malicious, or not what the client claims. The stack includes S3-compatible stora
 
 - **Bytes never pass through the API.** Three steps:
   1. `POST .../attachments` with name, type, size -> the API stores a **PENDING** row
-     and returns a **presigned POST policy** (valid 5 minutes) for one object key.
+     and returns a **presigned PUT URL** (valid 5 minutes) for one object key, plus the
+     exact headers to send.
   2. The browser uploads directly to storage.
   3. `POST .../attachments/:id/complete` -> the API calls `HeadObject` and marks the row
      **READY** only if the object exists with exactly the announced size and type;
      otherwise it deletes object and row (400).
-- **Storage enforces the policy**: `content-length-range [size, size]` and an exact
-  `Content-Type` condition. The browser cannot upload more or something else.
+- **Storage enforces the signature**: `Content-Type`, `Content-Length` and
+  `Content-Disposition` are signed headers, so a different type, size or disposition
+  invalidates the request. (Originally a presigned POST policy; changed to PUT in
+  ADR 0007 because POST policies are not supported by all S3-compatible services.)
 - **Keys are server-generated**: `workspaces/<w>/tasks/<t>/<uuid>`. The user's file
   name is display-only (sanitised: no paths, control or header-breaking characters).
 - **Type allowlist** shared with the web app (images, PDF, text/CSV, Office, zip).
   No HTML, SVG or JavaScript, which could execute when rendered.
-- **Downloads** are 60-second presigned GET URLs with
-  `Content-Disposition: attachment` (RFC 5987 file name), never rendered inline.
+- **Downloads** are 60-second presigned GET URLs. The object is stored with
+  `Content-Disposition: attachment` (RFC 5987 file name), so it is never rendered
+  inline.
   The API returns the URL as JSON; a redirect would not carry the Bearer token.
 - Only READY files are listed or downloadable. Upload/complete: MEMBER+, uploader
   only for complete. Delete: uploader or ADMIN+.

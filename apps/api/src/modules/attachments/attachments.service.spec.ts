@@ -74,7 +74,11 @@ describe('AttachmentsService', () => {
     storage = {
       createUpload: jest
         .fn()
-        .mockResolvedValue({ url: 'http://s3/bucket', fields: { key: KEY } }),
+        .mockResolvedValue({
+          url: 'http://s3/bucket/k',
+          method: 'PUT',
+          headers: {},
+        }),
       head: jest.fn(),
       downloadUrl: jest.fn().mockResolvedValue('http://s3/signed'),
       delete: jest.fn().mockResolvedValue(undefined),
@@ -129,10 +133,12 @@ describe('AttachmentsService', () => {
         data.storageKey,
         'application/pdf',
         1234,
+        'report.pdf',
       );
       expect(result.upload).toEqual({
-        url: 'http://s3/bucket',
-        fields: { key: KEY },
+        url: 'http://s3/bucket/k',
+        method: 'PUT',
+        headers: {},
       });
     });
 
@@ -209,7 +215,7 @@ describe('AttachmentsService', () => {
       ).resolves.toEqual({
         url: 'http://s3/signed',
       });
-      expect(storage.downloadUrl).toHaveBeenCalledWith(KEY, 'report.pdf');
+      expect(storage.downloadUrl).toHaveBeenCalledWith(KEY);
     });
 
     it('hides PENDING files', async () => {
