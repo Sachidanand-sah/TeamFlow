@@ -1,97 +1,97 @@
 <a class="back" routerLink="/">← All workspaces</a>
 
 @if (loadError(); as message) {
-<p class="error" role="alert">{{ message }}</p>
+  <p class="error" role="alert">{{ message }}</p>
 } @else if (workspace(); as ws) {
-<header class="title">
-  <h1>{{ ws.name }}</h1>
-  <tf-role-badge [role]="ws.role" />
-</header>
+  <header class="title">
+    <h1>{{ ws.name }}</h1>
+    <tf-role-badge [role]="ws.role" />
+  </header>
 
-@if (actionError(); as message) {
-<p class="error" role="alert">{{ message }}</p>
-}
-
-<section aria-labelledby="members-title">
-  <h2 id="members-title">Members</h2>
-  <tf-member-list
-    [members]="members()"
-    [actorRole]="ws.role"
-    [currentUserId]="currentUserId()"
-    [assignableRoles]="assignableRoles()"
-    [busy]="busy()"
-    (roleChange)="changeRole($event)"
-    (remove)="removeMember($event)"
-  />
-
-  @if (isAdmin()) {
-  <form
-    class="inline-form"
-    [formGroup]="addForm"
-    (ngSubmit)="addMember()"
-    novalidate
-  >
-    <tf-form-field
-      label="Add by email"
-      for="member-email"
-      [error]="emailError()"
-    >
-      <input
-        id="member-email"
-        type="email"
-        autocomplete="off"
-        formControlName="email"
-        aria-describedby="member-email-error"
-      />
-    </tf-form-field>
-    <div class="role-field">
-      <label for="member-role">Role</label>
-      <select id="member-role" formControlName="role">
-        @for (role of assignableRoles(); track role) {
-        <option [value]="role">{{ role.toLowerCase() }}</option>
-        }
-      </select>
-    </div>
-    <tf-button type="submit" [loading]="busy()">Add</tf-button>
-  </form>
-  }
-</section>
-
-<section class="settings" aria-labelledby="settings-title">
-  <h2 id="settings-title">Settings</h2>
-
-  @if (isAdmin()) {
-  <form
-    class="inline-form"
-    [formGroup]="renameForm"
-    (ngSubmit)="rename()"
-    novalidate
-  >
-    <tf-form-field label="Workspace name" for="workspace-name">
-      <input id="workspace-name" type="text" formControlName="name" />
-    </tf-form-field>
-    <tf-button type="submit" variant="secondary" [disabled]="busy()"
-      >Rename</tf-button
-    >
-  </form>
+  @if (actionError(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
   }
 
-  <div class="danger-zone">
-    @if (isOwner()) {
-    <tf-button
-      variant="secondary"
-      [disabled]="busy()"
-      (click)="deleteWorkspace()"
-    >
-      Delete workspace
-    </tf-button>
-    } @else {
-    <tf-button variant="secondary" [disabled]="busy()" (click)="leave()">
-      Leave workspace
-    </tf-button>
+  <section aria-labelledby="members-title">
+    <h2 id="members-title">Members</h2>
+    <tf-member-list
+      [members]="members()"
+      [actorRole]="ws.role"
+      [currentUserId]="currentUserId()"
+      [assignableRoles]="assignableRoles()"
+      [busy]="busy()"
+      (roleChange)="changeRole($event)"
+      (remove)="removeMember($event)"
+    />
+
+    @if (isAdmin()) {
+      <form
+        class="inline-form"
+        [formGroup]="addForm"
+        (ngSubmit)="addMember()"
+        novalidate
+      >
+        <tf-form-field
+          label="Add by email"
+          for="member-email"
+          [error]="emailError()"
+        >
+          <input
+            id="member-email"
+            type="email"
+            autocomplete="off"
+            formControlName="email"
+            aria-describedby="member-email-error"
+          />
+        </tf-form-field>
+        <div class="role-field">
+          <label for="member-role">Role</label>
+          <select id="member-role" formControlName="role">
+            @for (role of assignableRoles(); track role) {
+              <option [value]="role">{{ role.toLowerCase() }}</option>
+            }
+          </select>
+        </div>
+        <tf-button type="submit" [loading]="busy()">Add</tf-button>
+      </form>
     }
-  </div>
-</section>
+  </section>
+
+  <section class="settings" aria-labelledby="settings-title">
+    <h2 id="settings-title">Settings</h2>
+
+    @if (isAdmin()) {
+      <form
+        class="inline-form"
+        [formGroup]="renameForm"
+        (ngSubmit)="rename()"
+        novalidate
+      >
+        <tf-form-field label="Workspace name" for="workspace-name">
+          <input id="workspace-name" type="text" formControlName="name" />
+        </tf-form-field>
+        <tf-button type="submit" variant="secondary" [disabled]="busy()"
+          >Rename</tf-button
+        >
+      </form>
+    }
+
+    <div class="danger-zone">
+      @if (isOwner()) {
+        <tf-button
+          variant="secondary"
+          [disabled]="busy()"
+          (click)="deleteWorkspace()"
+        >
+          Delete workspace
+        </tf-button>
+      } @else {
+        <tf-button variant="secondary" [disabled]="busy()" (click)="leave()">
+          Leave workspace
+        </tf-button>
+      }
+    </div>
+  </section>
 } @else {
-<p class="muted">Loading…</p>
+  <p class="muted">Loading…</p>
 }

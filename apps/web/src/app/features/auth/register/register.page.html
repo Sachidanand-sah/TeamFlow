@@ -42,7 +42,7 @@
       </p>
 
       @if (serverError(); as message) {
-      <p class="auth-card__error" role="alert">{{ message }}</p>
+        <p class="auth-card__error" role="alert">{{ message }}</p>
       }
 
       <tf-button type="submit" [loading]="submitting()"
