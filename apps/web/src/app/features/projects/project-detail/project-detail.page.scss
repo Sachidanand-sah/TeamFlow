@@ -60,13 +60,8 @@ textarea {
   resize: vertical;
 }
 
-.board-placeholder {
+.board {
   margin-top: 2rem;
-  padding: 2rem;
-  border: 1px dashed var(--tf-color-border);
-  border-radius: 8px;
-  color: var(--tf-color-text-muted);
-  text-align: center;
 }
 
 .danger-zone {

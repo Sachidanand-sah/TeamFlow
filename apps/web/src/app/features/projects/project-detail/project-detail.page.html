@@ -46,9 +46,15 @@
     <p class="error" role="alert">{{ message }}</p>
   }
 
-  <section class="board-placeholder" aria-label="Task board">
-    <p>The task board for {{ p.key }} arrives in the next step.</p>
-  </section>
+  @if (workspace(); as ws) {
+    <section class="board" aria-label="Task board">
+      <tf-task-board
+        [workspaceId]="ws.id"
+        [projectId]="p.id"
+        [role]="ws.role"
+      />
+    </section>
+  }
 
   @if (canEdit()) {
     <div class="danger-zone">

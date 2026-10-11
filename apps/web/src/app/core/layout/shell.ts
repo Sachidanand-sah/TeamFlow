@@ -55,7 +55,7 @@ import { AuthService } from '../auth/auth.service';
       font-size: 0.875rem;
     }
     .shell-main {
-      max-width: 60rem;
+      max-width: 72rem;
       margin: 0 auto;
       padding: 2rem 1rem;
     }

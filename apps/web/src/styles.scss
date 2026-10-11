@@ -54,3 +54,11 @@ body {
 a {
   color: var(--tf-color-primary);
 }
+
+// The element CDK drags around is appended to <body>, outside any component's
+// encapsulated styles, so its look is global.
+.cdk-drag-preview {
+  list-style: none;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 20%);
+}

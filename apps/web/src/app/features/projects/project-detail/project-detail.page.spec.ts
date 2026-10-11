@@ -1,9 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { ProjectDto, WorkspaceDto, WorkspaceRole } from '@teamflow/shared';
 import { of, throwError } from 'rxjs';
+import { AuthService } from '../../../core/auth/auth.service';
 import { ProjectsApi } from '../../../core/projects/projects.api';
+import { TasksApi } from '../../../core/tasks/tasks.api';
 import { WorkspacesApi } from '../../../core/workspaces/workspaces.api';
 import { ProjectDetailPage } from './project-detail.page';
 
@@ -27,7 +30,7 @@ const workspace = (role: WorkspaceRole): WorkspaceDto => ({
 describe('ProjectDetailPage', () => {
   let fixture: ComponentFixture<ProjectDetailPage>;
   let projectsApi: { get: jest.Mock; update: jest.Mock; delete: jest.Mock };
-  let workspacesApi: { get: jest.Mock };
+  let workspacesApi: { get: jest.Mock; listMembers: jest.Mock };
 
   async function render(role: WorkspaceRole) {
     workspacesApi.get.mockReturnValue(of(workspace(role)));
@@ -53,13 +56,16 @@ describe('ProjectDetailPage', () => {
       update: jest.fn(),
       delete: jest.fn(),
     };
-    workspacesApi = { get: jest.fn() };
+    workspacesApi = { get: jest.fn(), listMembers: jest.fn(() => of([])) };
     TestBed.configureTestingModule({
       imports: [ProjectDetailPage],
       providers: [
         provideRouter([]),
         { provide: ProjectsApi, useValue: projectsApi },
         { provide: WorkspacesApi, useValue: workspacesApi },
+        // The embedded board has its own spec; here it renders an empty board.
+        { provide: TasksApi, useValue: { list: () => of([]) } },
+        { provide: AuthService, useValue: { user: signal(null) } },
       ],
     });
   });

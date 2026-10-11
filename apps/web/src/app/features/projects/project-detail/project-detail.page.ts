@@ -27,8 +27,9 @@ import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { httpErrorMessage } from '../../../core/http-error-message';
 import { ProjectsApi } from '../../../core/projects/projects.api';
 import { WorkspacesApi } from '../../../core/workspaces/workspaces.api';
+import { TaskBoard } from '../../tasks/task-board/task-board';
 
-/** Smart: one project. The task board will live here (MVP step 4). */
+/** Smart: one project's header and settings; the board is its own smart component. */
 @Component({
   selector: 'tf-project-detail-page',
   imports: [
@@ -36,6 +37,7 @@ import { WorkspacesApi } from '../../../core/workspaces/workspaces.api';
     RouterLink,
     ButtonComponent,
     FormFieldComponent,
+    TaskBoard,
   ],
   templateUrl: './project-detail.page.html',
   styleUrl: './project-detail.page.scss',

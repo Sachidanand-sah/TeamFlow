@@ -1,0 +1,72 @@
+@if (loading()) {
+  <p class="muted">Loading board…</p>
+} @else if (loadError(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+} @else {
+  @if (boardError(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+
+  <div class="board" cdkDropListGroup>
+    @for (status of statuses; track status) {
+      <section class="column" [attr.aria-labelledby]="'column-' + status">
+        <header class="column__header">
+          <h2 [id]="'column-' + status">{{ labels[status] }}</h2>
+          <span class="column__count">{{ columns()[status].length }}</span>
+        </header>
+
+        <ul
+          class="column__list"
+          cdkDropList
+          [cdkDropListData]="status"
+          [cdkDropListDisabled]="!canEdit()"
+          (cdkDropListDropped)="onDrop($event)"
+        >
+          @for (task of columns()[status]; track task.id) {
+            <li cdkDrag [cdkDragData]="task">
+              <tf-task-card
+                [task]="task"
+                role="button"
+                tabindex="0"
+                [attr.aria-label]="task.key + ': ' + task.title"
+                (click)="selectedId.set(task.id)"
+                (keydown.enter)="selectedId.set(task.id)"
+              />
+            </li>
+          }
+        </ul>
+
+        @if (status === 'TODO' && canEdit()) {
+          <form class="quick-add" [formGroup]="quickAdd" (ngSubmit)="addTask()">
+            <label class="visually-hidden" for="quick-add-title">
+              New task title
+            </label>
+            <input
+              id="quick-add-title"
+              type="text"
+              placeholder="+ Add a task"
+              autocomplete="off"
+              formControlName="title"
+              [attr.aria-busy]="adding()"
+            />
+          </form>
+        }
+      </section>
+    }
+  </div>
+}
+
+@if (selected(); as task) {
+  <tf-task-panel
+    [task]="task"
+    [members]="members()"
+    [canEdit]="canEdit()"
+    [canDelete]="canDeleteSelected()"
+    [busy]="panelBusy()"
+    [error]="panelError()"
+    (save)="saveSelected($event)"
+    (statusChange)="changeStatus($event)"
+    (remove)="deleteSelected()"
+    (closed)="closePanel()"
+  />
+}
