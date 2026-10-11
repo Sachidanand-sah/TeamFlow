@@ -8,6 +8,10 @@
     <tf-role-badge [role]="ws.role" />
   </header>
 
+  <section aria-labelledby="projects-title">
+    <tf-projects-section [workspaceId]="ws.id" [role]="ws.role" />
+  </section>
+
   @if (actionError(); as message) {
     <p class="error" role="alert">{{ message }}</p>
   }

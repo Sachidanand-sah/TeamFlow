@@ -1,0 +1,95 @@
+<div class="heading">
+  <h2 id="projects-title">Projects</h2>
+  @if (canCreate() && !showForm()) {
+    <tf-button variant="secondary" (click)="showForm.set(true)">
+      New project
+    </tf-button>
+  }
+</div>
+
+@if (showForm()) {
+  <form class="create" [formGroup]="form" (ngSubmit)="create()" novalidate>
+    <div class="create__row">
+      <tf-form-field
+        class="create__name"
+        label="Name"
+        for="project-name"
+        [error]="fieldError('name')"
+      >
+        <input
+          id="project-name"
+          type="text"
+          formControlName="name"
+          aria-describedby="project-name-error"
+        />
+      </tf-form-field>
+      <tf-form-field
+        class="create__key"
+        label="Key"
+        for="project-key"
+        [error]="fieldError('key')"
+      >
+        <input
+          id="project-key"
+          type="text"
+          formControlName="key"
+          maxlength="10"
+          autocapitalize="characters"
+          aria-describedby="project-key-error project-key-hint"
+          (input)="upperCaseKey($event)"
+        />
+      </tf-form-field>
+    </div>
+    <p id="project-key-hint" class="hint">
+      Prefix for task ids, e.g. WEB-12. It cannot be changed later.
+    </p>
+    <tf-form-field
+      label="Description (optional)"
+      for="project-description"
+      [error]="fieldError('description')"
+    >
+      <textarea
+        id="project-description"
+        rows="3"
+        formControlName="description"
+        aria-describedby="project-description-error"
+      ></textarea>
+    </tf-form-field>
+    @if (createError(); as message) {
+      <p class="error" role="alert">{{ message }}</p>
+    }
+    <div class="create__actions">
+      <tf-button type="submit" [loading]="creating()">Create project</tf-button>
+      <tf-button variant="secondary" (click)="showForm.set(false)">
+        Cancel
+      </tf-button>
+    </div>
+  </form>
+}
+
+@if (loading()) {
+  <p class="muted">Loading projects…</p>
+} @else if (loadError(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+} @else if (projects().length === 0) {
+  <p class="muted">
+    No projects yet.
+    @if (!canCreate()) {
+      An admin can create the first one.
+    }
+  </p>
+} @else {
+  <ul class="projects" aria-labelledby="projects-title">
+    @for (project of projects(); track project.id) {
+      <li>
+        <a
+          class="project"
+          [routerLink]="['/workspaces', workspaceId(), 'projects', project.id]"
+        >
+          <span class="project__key">{{ project.key }}</span>
+          <span class="project__name">{{ project.name }}</span>
+        </a>
+      </li>
+    }
+  </ul>
+}

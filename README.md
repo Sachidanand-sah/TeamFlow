@@ -18,7 +18,7 @@ Nx monorepo with an Angular frontend and a NestJS API on PostgreSQL (Prisma).
 
 - [x] Auth: register, login, refresh (rotating cookie), logout
 - [x] Workspaces and membership with roles (OWNER, ADMIN, MEMBER, VIEWER)
-- [ ] Projects
+- [x] Projects (see [permissions](docs/permissions.md))
 - [ ] Tasks with Kanban statuses
 - [ ] Comments and activity log
 - [ ] Real-time board updates

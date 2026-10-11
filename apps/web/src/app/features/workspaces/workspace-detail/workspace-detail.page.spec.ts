@@ -5,6 +5,7 @@ import { provideRouter, Router } from '@angular/router';
 import { MemberDto, WorkspaceDto, WorkspaceRole } from '@teamflow/shared';
 import { of, throwError } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
+import { ProjectsApi } from '../../../core/projects/projects.api';
 import { WorkspacesApi } from '../../../core/workspaces/workspaces.api';
 import { WorkspaceDetailPage } from './workspace-detail.page';
 
@@ -55,6 +56,8 @@ describe('WorkspaceDetailPage', () => {
       providers: [
         provideRouter([]),
         { provide: WorkspacesApi, useValue: api },
+        // The embedded projects section has its own spec; here it just renders empty.
+        { provide: ProjectsApi, useValue: { list: () => of([]) } },
         {
           provide: AuthService,
           useValue: {

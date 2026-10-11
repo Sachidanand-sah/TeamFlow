@@ -30,6 +30,7 @@ import { catchError, forkJoin, Observable, of, switchMap } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { httpErrorMessage } from '../../../core/http-error-message';
 import { WorkspacesApi } from '../../../core/workspaces/workspaces.api';
+import { ProjectsSection } from '../../projects/projects-section/projects-section';
 import { RoleBadge } from '../role-badge';
 import { MemberList, RoleChange } from './member-list';
 
@@ -48,6 +49,7 @@ const MEMBER_ERRORS = {
     ButtonComponent,
     FormFieldComponent,
     MemberList,
+    ProjectsSection,
     RoleBadge,
   ],
   templateUrl: './workspace-detail.page.html',

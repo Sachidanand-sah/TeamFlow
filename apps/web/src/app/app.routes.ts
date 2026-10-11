@@ -42,6 +42,14 @@ export const appRoutes: Route[] = [
             (m) => m.WorkspaceDetailPage,
           ),
       },
+      {
+        path: 'workspaces/:workspaceId/projects/:projectId',
+        title: 'Project · TeamFlow',
+        loadComponent: () =>
+          import('./features/projects/project-detail/project-detail.page').then(
+            (m) => m.ProjectDetailPage,
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

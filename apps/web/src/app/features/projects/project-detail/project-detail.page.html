@@ -1,0 +1,66 @@
+<a class="back" [routerLink]="['/workspaces', workspaceId()]">
+  ← {{ workspace()?.name ?? 'Workspace' }}
+</a>
+
+@if (loadError(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+} @else if (project(); as p) {
+  @if (editing()) {
+    <form class="edit" [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <tf-form-field label="Name" for="project-name" [error]="nameError()">
+        <input
+          id="project-name"
+          type="text"
+          formControlName="name"
+          aria-describedby="project-name-error"
+        />
+      </tf-form-field>
+      <tf-form-field label="Description" for="project-description">
+        <textarea
+          id="project-description"
+          rows="4"
+          formControlName="description"
+        ></textarea>
+      </tf-form-field>
+      <div class="actions">
+        <tf-button type="submit" [loading]="busy()">Save</tf-button>
+        <tf-button variant="secondary" (click)="editing.set(false)">
+          Cancel
+        </tf-button>
+      </div>
+    </form>
+  } @else {
+    <header class="title">
+      <span class="key">{{ p.key }}</span>
+      <h1>{{ p.name }}</h1>
+      @if (canEdit()) {
+        <tf-button variant="secondary" (click)="startEditing()">Edit</tf-button>
+      }
+    </header>
+    @if (p.description) {
+      <p class="description">{{ p.description }}</p>
+    }
+  }
+
+  @if (actionError(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+
+  <section class="board-placeholder" aria-label="Task board">
+    <p>The task board for {{ p.key }} arrives in the next step.</p>
+  </section>
+
+  @if (canEdit()) {
+    <div class="danger-zone">
+      <tf-button
+        variant="secondary"
+        [disabled]="busy()"
+        (click)="deleteProject()"
+      >
+        Delete project
+      </tf-button>
+    </div>
+  }
+} @else {
+  <p class="muted">Loading…</p>
+}
