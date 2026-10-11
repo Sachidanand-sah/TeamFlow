@@ -12,7 +12,11 @@ export type TrackedTaskField = (typeof TRACKED_TASK_FIELDS)[number];
 
 /** Type-specific payloads. Must match the Prisma `ActivityType` enum. */
 export interface ActivityDataByType {
-  TASK_CREATED: { title: string };
+  TASK_CREATED: {
+    title: string;
+    /** Set when the task was created already assigned. */
+    assignee?: TaskPersonDto | null;
+  };
   TASK_UPDATED: {
     fields: TrackedTaskField[];
     /** Set when the assignee changed; null = unassigned. */

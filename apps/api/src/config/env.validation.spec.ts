@@ -18,6 +18,22 @@ describe('validateEnv', () => {
     expect(env.CORS_ORIGIN).toBe('http://localhost:4200');
   });
 
+  it('parses SMTP_SECURE from its string form', () => {
+    expect(validateEnv({ ...validEnv, SMTP_SECURE: 'true' }).SMTP_SECURE).toBe(
+      true,
+    );
+    expect(validateEnv({ ...validEnv, SMTP_SECURE: 'false' }).SMTP_SECURE).toBe(
+      false,
+    );
+    expect(validateEnv(validEnv).SMTP_SECURE).toBe(false);
+  });
+
+  it('rejects a non-redis REDIS_URL', () => {
+    expect(() =>
+      validateEnv({ ...validEnv, REDIS_URL: 'http://localhost:6379' }),
+    ).toThrow(/REDIS_URL/);
+  });
+
   it('converts numeric strings from process.env to numbers', () => {
     const env = validateEnv({ ...validEnv, API_PORT: '8080' });
 

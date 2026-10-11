@@ -13,7 +13,11 @@ import { RealtimeModule } from '../modules/realtime/realtime.module';
 import { TasksModule } from '../modules/tasks/tasks.module';
 import { UsersModule } from '../modules/users/users.module';
 import { WorkspacesModule } from '../modules/workspaces/workspaces.module';
+import { MailModule } from '../mail/mail.module';
+import { MaintenanceModule } from '../modules/maintenance/maintenance.module';
+import { NotificationsModule } from '../modules/notifications/notifications.module';
 import { PrismaModule } from '../prisma/prisma.module';
+import { QueueModule } from '../queue/queue.module';
 import { StorageModule } from '../storage/storage.module';
 import { HealthController } from './health.controller';
 
@@ -38,6 +42,10 @@ import { HealthController } from './health.controller';
     RealtimeModule,
     StorageModule,
     AttachmentsModule,
+    QueueModule,
+    MailModule,
+    NotificationsModule,
+    MaintenanceModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

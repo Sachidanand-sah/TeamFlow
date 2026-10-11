@@ -1,7 +1,9 @@
-import { plainToInstance, Type } from 'class-transformer';
+import { plainToInstance, Transform, Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
+  IsOptional,
   IsString,
   IsUrl,
   Max,
@@ -79,6 +81,48 @@ export class EnvironmentVariables {
   @IsString()
   @MinLength(8)
   S3_SECRET_KEY!: string;
+
+  // --- Queues and email ---
+
+  @IsUrl({
+    require_tld: false,
+    protocols: ['redis', 'rediss'],
+    require_protocol: true,
+  })
+  REDIS_URL = 'redis://localhost:6379';
+
+  @IsString()
+  @MinLength(1)
+  SMTP_HOST = 'localhost';
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(65535)
+  SMTP_PORT = 1025;
+
+  /** true = TLS from the first byte (port 465). false = plain or STARTTLS. */
+  @Transform(
+    ({ value }: { value: unknown }) => value === true || value === 'true',
+  )
+  @IsBoolean()
+  SMTP_SECURE = false;
+
+  @IsOptional()
+  @IsString()
+  SMTP_USER?: string;
+
+  @IsOptional()
+  @IsString()
+  SMTP_PASSWORD?: string;
+
+  @IsString()
+  @MinLength(3)
+  MAIL_FROM = 'TeamFlow <no-reply@teamflow.local>';
+
+  /** Public URL of the web app, used for links in emails. */
+  @IsUrl({ require_tld: false, require_protocol: true })
+  APP_URL = 'http://localhost:4200';
 }
 
 /** Used by `ConfigModule.forRoot({ validate })`. Throws if anything is invalid. */

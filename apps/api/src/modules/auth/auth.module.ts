@@ -33,7 +33,8 @@ import { RefreshTokenService } from './refresh-token.service';
     RefreshTokenRepository,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],
-  // The real-time gateway verifies the same access tokens.
-  exports: [JwtModule],
+  // The real-time gateway verifies the same access tokens; the maintenance job
+  // deletes expired refresh tokens.
+  exports: [JwtModule, RefreshTokenRepository],
 })
 export class AuthModule {}

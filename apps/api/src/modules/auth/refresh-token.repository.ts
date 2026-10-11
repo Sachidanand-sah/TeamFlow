@@ -53,4 +53,16 @@ export class RefreshTokenRepository {
       data: { revokedAt: new Date() },
     });
   }
+
+  /**
+   * Deletes tokens that expired before `before`. Returns how many were removed.
+   * WHY only expired ones: revoked-but-unexpired rows must stay, so that reusing a
+   * stolen old token is still detected and revokes the whole family.
+   */
+  async deleteExpired(before: Date): Promise<number> {
+    const { count } = await this.prisma.refreshToken.deleteMany({
+      where: { expiresAt: { lt: before } },
+    });
+    return count;
+  }
 }

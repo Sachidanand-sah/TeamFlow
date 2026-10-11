@@ -129,7 +129,9 @@ export class TasksService {
     await this.activity.record({
       ...this.activityBase(member, task),
       type: 'TASK_CREATED',
-      data: { title: task.title },
+      data: dto.assignee
+        ? { title: task.title, assignee: dto.assignee }
+        : { title: task.title },
     });
     return dto;
   }

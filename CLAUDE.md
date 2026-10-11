@@ -93,5 +93,5 @@ dependency. Do not skip tests.
 
 - `npx nx serve api` / `npx nx serve web` — dev servers (web proxies `/api` to the API)
 - `npx nx run-many -t lint test build` — full check before committing
-- `docker compose up -d` — start postgres, redis, minio
+- `docker compose up -d` — start postgres, redis, minio, mailpit (local inbox: http://localhost:8025)
 - `npx prisma migrate dev --name <change>` — create + apply a migration (schema in `apps/api/prisma/schema.prisma`)

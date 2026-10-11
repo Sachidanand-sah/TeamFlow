@@ -41,6 +41,15 @@ services:
     volumes:
       - minio-data:/data
 
+  # Local SMTP server that catches every email: inbox UI at http://localhost:8025.
+  # Nothing is ever delivered to real addresses.
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:1025:1025'
+      - '127.0.0.1:8025:8025'
+
 volumes:
   postgres-data:
   redis-data:
