@@ -1,0 +1,63 @@
+:host {
+  display: inline-block;
+}
+
+.tf-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--tf-radius, 6px);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tf-color-focus, #4f7cff);
+    outline-offset: 2px;
+  }
+}
+
+.tf-button--primary {
+  background: var(--tf-color-primary, #3b5bdb);
+  color: var(--tf-color-on-primary, #fff);
+
+  &:hover:not(:disabled) {
+    background: var(--tf-color-primary-hover, #364fc7);
+  }
+}
+
+.tf-button--secondary {
+  background: transparent;
+  border-color: var(--tf-color-border, #ced4da);
+  color: var(--tf-color-text, #212529);
+
+  &:hover:not(:disabled) {
+    background: var(--tf-color-surface-hover, rgb(0 0 0 / 4%));
+  }
+}
+
+.tf-button__spinner {
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: tf-spin 700ms linear infinite;
+}
+
+@keyframes tf-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

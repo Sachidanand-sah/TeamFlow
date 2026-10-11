@@ -33,7 +33,7 @@ async function bootstrap(): Promise<void> {
   // Run onModuleDestroy hooks (e.g. close DB connections) on SIGTERM/SIGINT.
   app.enableShutdownHooks();
 
-  const port = config.get('PORT', { infer: true });
+  const port = config.get('API_PORT', { infer: true });
   await app.listen(port);
   Logger.log(`API listening on http://localhost:${port}/api`, 'Bootstrap');
 }

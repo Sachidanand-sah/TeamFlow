@@ -1,1 +1,56 @@
-/* You can add global styles to this file, and also import other style files */
+// Design tokens. Components in @teamflow/ui read these CSS variables.
+:root {
+  color-scheme: light dark;
+
+  --tf-radius: 6px;
+  --tf-color-bg: #f5f6f8;
+  --tf-color-surface: #ffffff;
+  --tf-color-surface-hover: rgb(0 0 0 / 4%);
+  --tf-color-border: #d0d5dd;
+  --tf-color-text: #1d2433;
+  --tf-color-text-muted: #5b6475;
+  --tf-color-primary: #3b5bdb;
+  --tf-color-primary-hover: #364fc7;
+  --tf-color-on-primary: #ffffff;
+  --tf-color-focus: #4f7cff;
+  --tf-color-danger: #c92a2a;
+  --tf-color-danger-surface: #fff0f0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tf-color-bg: #12151c;
+    --tf-color-surface: #1b1f29;
+    --tf-color-surface-hover: rgb(255 255 255 / 6%);
+    --tf-color-border: #343a48;
+    --tf-color-text: #e6e9ef;
+    --tf-color-text-muted: #9aa3b5;
+    --tf-color-primary: #5c7cfa;
+    --tf-color-primary-hover: #748ffc;
+    --tf-color-danger: #ff8787;
+    --tf-color-danger-surface: #3b1d1f;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--tf-color-bg);
+  color: var(--tf-color-text);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  line-height: 1.5;
+}
+
+a {
+  color: var(--tf-color-primary);
+}

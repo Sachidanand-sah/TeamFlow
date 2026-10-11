@@ -1,0 +1,57 @@
+<main class="auth-page">
+  <section class="auth-card" aria-labelledby="register-title">
+    <h1 id="register-title">Create your account</h1>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <tf-form-field label="Name" for="name" [error]="fieldError('name')">
+        <input
+          id="name"
+          type="text"
+          autocomplete="name"
+          formControlName="name"
+          aria-describedby="name-error"
+        />
+      </tf-form-field>
+
+      <tf-form-field label="Email" for="email" [error]="fieldError('email')">
+        <input
+          id="email"
+          type="email"
+          autocomplete="email"
+          formControlName="email"
+          aria-describedby="email-error"
+        />
+      </tf-form-field>
+
+      <tf-form-field
+        label="Password"
+        for="password"
+        [error]="fieldError('password')"
+      >
+        <input
+          id="password"
+          type="password"
+          autocomplete="new-password"
+          formControlName="password"
+          aria-describedby="password-error password-hint"
+        />
+      </tf-form-field>
+      <p id="password-hint" class="auth-card__hint">
+        At least {{ passwordMinLength }} characters. A short sentence works
+        well.
+      </p>
+
+      @if (serverError(); as message) {
+      <p class="auth-card__error" role="alert">{{ message }}</p>
+      }
+
+      <tf-button type="submit" [loading]="submitting()"
+        >Create account</tf-button
+      >
+    </form>
+
+    <p class="auth-card__switch">
+      Already have an account? <a routerLink="/login">Sign in</a>
+    </p>
+  </section>
+</main>

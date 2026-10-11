@@ -52,7 +52,8 @@
       "defaultConfiguration": "development",
       "dependsOn": ["api:serve"],
       "options": {
-        "proxyConfig": "apps/web/proxy.conf.json"
+        "proxyConfig": "apps/web/proxy.conf.json",
+        "port": 4200
       },
       "configurations": {
         "production": {

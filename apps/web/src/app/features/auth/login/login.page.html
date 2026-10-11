@@ -1,0 +1,41 @@
+<main class="auth-page">
+  <section class="auth-card" aria-labelledby="login-title">
+    <h1 id="login-title">Sign in to TeamFlow</h1>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <tf-form-field label="Email" for="email" [error]="fieldError('email')">
+        <input
+          id="email"
+          type="email"
+          autocomplete="email"
+          formControlName="email"
+          aria-describedby="email-error"
+        />
+      </tf-form-field>
+
+      <tf-form-field
+        label="Password"
+        for="password"
+        [error]="fieldError('password')"
+      >
+        <input
+          id="password"
+          type="password"
+          autocomplete="current-password"
+          formControlName="password"
+          aria-describedby="password-error"
+        />
+      </tf-form-field>
+
+      @if (serverError(); as message) {
+      <p class="auth-card__error" role="alert">{{ message }}</p>
+      }
+
+      <tf-button type="submit" [loading]="submitting()">Sign in</tf-button>
+    </form>
+
+    <p class="auth-card__switch">
+      New to TeamFlow? <a routerLink="/register">Create an account</a>
+    </p>
+  </section>
+</main>

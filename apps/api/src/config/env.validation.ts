@@ -31,7 +31,7 @@ export class EnvironmentVariables {
   @IsInt()
   @Min(1)
   @Max(65535)
-  PORT = 3000;
+  API_PORT = 3000;
 
   @IsString()
   @MinLength(1)

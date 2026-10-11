@@ -10,16 +10,16 @@ describe('validateEnv', () => {
     const env = validateEnv(validEnv);
 
     expect(env.NODE_ENV).toBe(NodeEnv.Development);
-    expect(env.PORT).toBe(3000);
+    expect(env.API_PORT).toBe(3000);
     expect(env.JWT_ACCESS_TTL_SECONDS).toBe(900);
     expect(env.REFRESH_TOKEN_TTL_DAYS).toBe(7);
     expect(env.CORS_ORIGIN).toBe('http://localhost:4200');
   });
 
   it('converts numeric strings from process.env to numbers', () => {
-    const env = validateEnv({ ...validEnv, PORT: '8080' });
+    const env = validateEnv({ ...validEnv, API_PORT: '8080' });
 
-    expect(env.PORT).toBe(8080);
+    expect(env.API_PORT).toBe(8080);
   });
 
   it('rejects a JWT secret shorter than 32 characters', () => {
