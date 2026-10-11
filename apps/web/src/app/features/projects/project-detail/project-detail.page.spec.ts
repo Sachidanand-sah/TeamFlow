@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { ProjectDto, WorkspaceDto, WorkspaceRole } from '@teamflow/shared';
 import { of, throwError } from 'rxjs';
+import { ActivityApi } from '../../../core/activity/activity.api';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ProjectsApi } from '../../../core/projects/projects.api';
 import { TasksApi } from '../../../core/tasks/tasks.api';
@@ -65,6 +66,10 @@ describe('ProjectDetailPage', () => {
         { provide: WorkspacesApi, useValue: workspacesApi },
         // The embedded board has its own spec; here it renders an empty board.
         { provide: TasksApi, useValue: { list: () => of([]) } },
+        {
+          provide: ActivityApi,
+          useValue: { list: () => of({ items: [], nextCursor: null }) },
+        },
         { provide: AuthService, useValue: { user: signal(null) } },
       ],
     });

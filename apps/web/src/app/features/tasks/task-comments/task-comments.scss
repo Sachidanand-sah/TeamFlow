@@ -1,0 +1,95 @@
+:host {
+  display: block;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--tf-color-border);
+}
+
+.title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.muted {
+  color: var(--tf-color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.error {
+  color: var(--tf-color-danger);
+}
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.comment__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+  font-size: 0.875rem;
+}
+
+.comment__body {
+  margin: 0.25rem 0 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.comment__actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--tf-color-text-muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--tf-color-text);
+  }
+}
+
+.link--danger:hover {
+  color: var(--tf-color-danger);
+}
+
+textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--tf-color-border);
+  border-radius: var(--tf-radius);
+  background: var(--tf-color-surface);
+  color: var(--tf-color-text);
+  font: inherit;
+  resize: vertical;
+}
+
+.add {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

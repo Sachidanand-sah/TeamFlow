@@ -20,7 +20,7 @@ Nx monorepo with an Angular frontend and a NestJS API on PostgreSQL (Prisma).
 - [x] Workspaces and membership with roles (OWNER, ADMIN, MEMBER, VIEWER)
 - [x] Projects (see [permissions](docs/permissions.md))
 - [x] Tasks with Kanban statuses (drag-and-drop board, assignees, priorities)
-- [ ] Comments and activity log
+- [x] Comments and activity log
 - [ ] Real-time board updates
 - [ ] File attachments
 - [ ] Email notifications via queue

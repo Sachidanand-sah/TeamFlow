@@ -14,6 +14,9 @@ role get **403**.
 | Create, edit, assign, move tasks     |        |   ✓    |   ✓   |   ✓   |
 | Delete a task you reported           |        |   ✓    |   ✓   |   ✓   |
 | Delete any task                      |        |        |   ✓   |   ✓   |
+| Read comments and project activity   |   ✓    |   ✓    |   ✓   |   ✓   |
+| Comment; edit/delete own comments    |        |   ✓    |   ✓   |   ✓   |
+| Delete anyone's comment (moderation) |        |        |   ✓   |   ✓   |
 | Leave workspace                      |   ✓    |   ✓    |   ✓   |       |
 | Rename workspace                     |        |        |   ✓   |   ✓   |
 | Add / change / remove MEMBER, VIEWER |        |        |   ✓   |   ✓   |
@@ -24,6 +27,7 @@ role get **403**.
 Rules that a table cannot show:
 
 - Nobody can change their own role.
+- Nobody, not even an admin, can edit someone else's comment (only delete it).
 - OWNER is never granted through the API (ownership transfer is not built yet).
 - A project's key cannot be changed after creation (task ids depend on it).
 - A task can only be assigned to a current member of the same workspace. When a

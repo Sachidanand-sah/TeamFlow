@@ -54,6 +54,9 @@
         [role]="ws.role"
       />
     </section>
+    <section class="activity" aria-label="Project activity">
+      <tf-activity-feed [workspaceId]="ws.id" [projectId]="p.id" />
+    </section>
   }
 
   @if (canEdit()) {

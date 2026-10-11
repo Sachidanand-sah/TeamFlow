@@ -1,0 +1,89 @@
+<h3 class="title">Comments</h3>
+
+@if (loading()) {
+  <p class="muted">Loading comments…</p>
+} @else {
+  @if (comments().length === 0) {
+    <p class="muted">No comments yet.</p>
+  }
+  <ol class="thread">
+    @for (comment of comments(); track comment.id) {
+      <li class="comment">
+        <div class="comment__meta">
+          <strong>{{ comment.author?.name ?? 'Deleted user' }}</strong>
+          <span class="muted">
+            {{ relativeTime(comment.createdAt) }}
+            @if (comment.editedAt) {
+              · edited
+            }
+          </span>
+        </div>
+
+        @if (editingId() === comment.id) {
+          <label class="visually-hidden" [for]="'edit-' + comment.id">
+            Edit comment
+          </label>
+          <textarea
+            [id]="'edit-' + comment.id"
+            rows="3"
+            [maxlength]="maxLength"
+            [(ngModel)]="editText"
+          ></textarea>
+          <div class="comment__actions">
+            <button
+              type="button"
+              class="link"
+              [disabled]="busy()"
+              (click)="saveEdit(comment)"
+            >
+              Save
+            </button>
+            <button type="button" class="link" (click)="editingId.set(null)">
+              Cancel
+            </button>
+          </div>
+        } @else {
+          <!-- Interpolation escapes HTML, so a comment can never inject markup. -->
+          <p class="comment__body">{{ comment.body }}</p>
+          <div class="comment__actions">
+            @if (canEdit(comment)) {
+              <button type="button" class="link" (click)="startEdit(comment)">
+                Edit
+              </button>
+            }
+            @if (canDelete(comment)) {
+              <button
+                type="button"
+                class="link link--danger"
+                [disabled]="busy()"
+                (click)="remove(comment)"
+              >
+                Delete
+              </button>
+            }
+          </div>
+        }
+      </li>
+    }
+  </ol>
+}
+
+@if (error(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+}
+
+@if (canWrite()) {
+  <form class="add" [formGroup]="form" (ngSubmit)="add()">
+    <label class="visually-hidden" for="new-comment">Add a comment</label>
+    <textarea
+      id="new-comment"
+      rows="3"
+      placeholder="Add a comment…"
+      formControlName="body"
+      [maxlength]="maxLength"
+    ></textarea>
+    <tf-button type="submit" variant="secondary" [loading]="busy()">
+      Comment
+    </tf-button>
+  </form>
+}

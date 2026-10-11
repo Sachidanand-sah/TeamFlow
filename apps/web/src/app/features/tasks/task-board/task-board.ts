@@ -35,10 +35,12 @@ import {
 } from '@teamflow/shared';
 import { catchError, forkJoin, map, Observable, of, switchMap } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
+import { TaskRef } from '../../../core/comments/comments.api';
 import { httpErrorMessage } from '../../../core/http-error-message';
 import { TasksApi } from '../../../core/tasks/tasks.api';
 import { WorkspacesApi } from '../../../core/workspaces/workspaces.api';
 import { TaskCard } from '../task-card';
+import { TaskComments } from '../task-comments/task-comments';
 import { TaskPanel } from '../task-panel/task-panel';
 
 const TASK_ERRORS = {
@@ -63,6 +65,7 @@ const TASK_ERRORS = {
     CdkDrag,
     ReactiveFormsModule,
     TaskCard,
+    TaskComments,
     TaskPanel,
   ],
   templateUrl: './task-board.html',
@@ -93,6 +96,9 @@ export class TaskBoard implements OnInit {
   protected readonly adding = signal(false);
 
   protected readonly canEdit = computed(() => canEditTasks(this.role()));
+  protected readonly currentUserId = computed(
+    () => this.auth.user()?.id ?? null,
+  );
 
   /** Tasks grouped by column, each sorted by position. */
   protected readonly columns = computed(() => {
@@ -111,6 +117,13 @@ export class TaskBoard implements OnInit {
   protected readonly selected = computed(
     () => this.tasks().find((t) => t.id === this.selectedId()) ?? null,
   );
+  /** Changes only when another task is selected, so comments reload only then. */
+  protected readonly selectedRef = computed<TaskRef | null>(() => {
+    const taskId = this.selectedId();
+    return taskId
+      ? { workspaceId: this.workspaceId(), projectId: this.projectId(), taskId }
+      : null;
+  });
   protected readonly canDeleteSelected = computed(() => {
     const task = this.selected();
     return (

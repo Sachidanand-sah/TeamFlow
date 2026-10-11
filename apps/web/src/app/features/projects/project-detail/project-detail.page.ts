@@ -27,6 +27,7 @@ import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { httpErrorMessage } from '../../../core/http-error-message';
 import { ProjectsApi } from '../../../core/projects/projects.api';
 import { WorkspacesApi } from '../../../core/workspaces/workspaces.api';
+import { ActivityFeed } from '../../activity/activity-feed';
 import { TaskBoard } from '../../tasks/task-board/task-board';
 
 /** Smart: one project's header and settings; the board is its own smart component. */
@@ -38,6 +39,7 @@ import { TaskBoard } from '../../tasks/task-board/task-board';
     ButtonComponent,
     FormFieldComponent,
     TaskBoard,
+    ActivityFeed,
   ],
   templateUrl: './project-detail.page.html',
   styleUrl: './project-detail.page.scss',

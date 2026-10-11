@@ -68,5 +68,13 @@
     (statusChange)="changeStatus($event)"
     (remove)="deleteSelected()"
     (closed)="closePanel()"
-  />
+  >
+    @if (selectedRef(); as ref) {
+      <tf-task-comments
+        [taskRef]="ref"
+        [role]="role()"
+        [currentUserId]="currentUserId()"
+      />
+    }
+  </tf-task-panel>
 }

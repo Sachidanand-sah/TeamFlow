@@ -10,6 +10,7 @@ import {
 } from '@teamflow/shared';
 import { of, Subject, throwError } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
+import { CommentsApi } from '../../../core/comments/comments.api';
 import { TasksApi } from '../../../core/tasks/tasks.api';
 import { WorkspacesApi } from '../../../core/workspaces/workspaces.api';
 import { TaskBoard } from './task-board';
@@ -106,6 +107,8 @@ describe('TaskBoard', () => {
       imports: [TaskBoard],
       providers: [
         { provide: TasksApi, useValue: api },
+        // The panel's comment thread has its own spec; here it is empty.
+        { provide: CommentsApi, useValue: { list: () => of([]) } },
         {
           provide: WorkspacesApi,
           useValue: { listMembers: () => of(members) },
