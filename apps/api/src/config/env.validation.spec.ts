@@ -3,6 +3,8 @@ import { NodeEnv, validateEnv } from './env.validation';
 const validEnv = {
   DATABASE_URL: 'postgresql://u:p@localhost:5432/db',
   JWT_ACCESS_SECRET: 'x'.repeat(32),
+  S3_ACCESS_KEY: 'teamflow',
+  S3_SECRET_KEY: 'teamflow-secret',
 };
 
 describe('validateEnv', () => {

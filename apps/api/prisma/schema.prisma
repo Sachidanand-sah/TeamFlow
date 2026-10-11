@@ -27,6 +27,7 @@ model User {
   reportedTasks Task[]
   comments      Comment[]
   activities    Activity[]
+  attachments   Attachment[]
 
   @@map("users")
 }
@@ -51,6 +52,7 @@ model Workspace {
   tasks       Task[]
   comments    Comment[]
   activities  Activity[]
+  attachments Attachment[]
 
   @@map("workspaces")
 }
@@ -119,8 +121,9 @@ model Task {
   assignee  Membership? @relation(fields: [assigneeMembershipId], references: [id], onDelete: SetNull)
   reporter  User?       @relation(fields: [reporterId], references: [id], onDelete: SetNull)
 
-  comments   Comment[]
-  activities Activity[]
+  comments    Comment[]
+  activities  Activity[]
+  attachments Attachment[]
 
   @@unique([projectId, number])
   /// Serves the board query: one project's tasks, grouped by column, in order.
@@ -222,4 +225,36 @@ model RefreshToken {
   @@index([familyId])
   @@index([userId])
   @@map("refresh_tokens")
+}
+
+enum AttachmentStatus {
+  /// Upload URL handed out; the file may not exist in storage yet.
+  PENDING
+  /// The server checked the object in storage; visible to members.
+  READY
+}
+
+/// Metadata for a file stored in S3/MinIO. The bytes never pass through the API.
+model Attachment {
+  id          String           @id @default(uuid()) @db.Uuid
+  workspaceId String           @map("workspace_id") @db.Uuid
+  taskId      String           @map("task_id") @db.Uuid
+  uploaderId  String?          @map("uploader_id") @db.Uuid
+  /// Display name only (sanitised). Never used to build the storage key.
+  fileName    String           @map("file_name")
+  contentType String           @map("content_type")
+  size        Int
+  /// Server-generated object key: "workspaces/<w>/tasks/<t>/<uuid>".
+  storageKey  String           @unique @map("storage_key")
+  status      AttachmentStatus @default(PENDING)
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  task      Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploader  User?     @relation(fields: [uploaderId], references: [id], onDelete: SetNull)
+
+  @@index([taskId, createdAt])
+  /// Finds abandoned PENDING uploads for cleanup.
+  @@index([status, createdAt])
+  @@map("attachments")
 }

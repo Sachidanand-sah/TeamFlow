@@ -1,4 +1,5 @@
 export * from './lib/activity';
+export * from './lib/attachments';
 export * from './lib/auth';
 export * from './lib/board-events';
 export * from './lib/comments';

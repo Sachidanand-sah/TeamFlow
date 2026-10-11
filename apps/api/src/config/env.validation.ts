@@ -57,6 +57,28 @@ export class EnvironmentVariables {
   /** Exact origin of the web app; CORS allows only this one. */
   @IsUrl({ require_tld: false, require_protocol: true })
   CORS_ORIGIN = 'http://localhost:4200';
+
+  // --- Object storage (S3 API; MinIO locally) ---
+
+  /** Must be reachable by BROWSERS too: they upload/download with signed URLs. */
+  @IsUrl({ require_tld: false, require_protocol: true })
+  S3_ENDPOINT = 'http://localhost:9000';
+
+  @IsString()
+  @MinLength(1)
+  S3_REGION = 'us-east-1';
+
+  @IsString()
+  @MinLength(3)
+  S3_BUCKET = 'teamflow-attachments';
+
+  @IsString()
+  @MinLength(3)
+  S3_ACCESS_KEY!: string;
+
+  @IsString()
+  @MinLength(8)
+  S3_SECRET_KEY!: string;
 }
 
 /** Used by `ConfigModule.forRoot({ validate })`. Throws if anything is invalid. */
