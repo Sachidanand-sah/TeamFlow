@@ -3,7 +3,10 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { validateEnv } from '../config/env.validation';
+import { DomainEventsModule } from '../events/domain-events';
+import { ActivityModule } from '../modules/activity/activity.module';
 import { AuthModule } from '../modules/auth/auth.module';
+import { CommentsModule } from '../modules/comments/comments.module';
 import { ProjectsModule } from '../modules/projects/projects.module';
 import { TasksModule } from '../modules/tasks/tasks.module';
 import { UsersModule } from '../modules/users/users.module';
@@ -21,11 +24,14 @@ import { HealthController } from './health.controller';
     // Default: 100 requests per minute per IP. Credential endpoints use a lower limit.
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
     PrismaModule,
+    DomainEventsModule,
     UsersModule,
     AuthModule,
     WorkspacesModule,
     ProjectsModule,
     TasksModule,
+    ActivityModule,
+    CommentsModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

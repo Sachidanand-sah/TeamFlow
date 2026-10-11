@@ -25,6 +25,8 @@ model User {
   refreshTokens RefreshToken[]
   memberships   Membership[]
   reportedTasks Task[]
+  comments      Comment[]
+  activities    Activity[]
 
   @@map("users")
 }
@@ -47,6 +49,8 @@ model Workspace {
   memberships Membership[]
   projects    Project[]
   tasks       Task[]
+  comments    Comment[]
+  activities  Activity[]
 
   @@map("workspaces")
 }
@@ -64,8 +68,9 @@ model Project {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  tasks     Task[]
+  workspace  Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  tasks      Task[]
+  activities Activity[]
 
   /// Keys are unique per workspace (two teams can both have "WEB").
   /// The index also serves "list projects of workspace W".
@@ -114,12 +119,69 @@ model Task {
   assignee  Membership? @relation(fields: [assigneeMembershipId], references: [id], onDelete: SetNull)
   reporter  User?       @relation(fields: [reporterId], references: [id], onDelete: SetNull)
 
+  comments   Comment[]
+  activities Activity[]
+
   @@unique([projectId, number])
   /// Serves the board query: one project's tasks, grouped by column, in order.
   @@index([projectId, status, position])
   @@index([workspaceId])
   @@index([assigneeMembershipId])
   @@map("tasks")
+}
+
+model Comment {
+  id          String    @id @default(uuid()) @db.Uuid
+  workspaceId String    @map("workspace_id") @db.Uuid
+  taskId      String    @map("task_id") @db.Uuid
+  /// NULL if the author's account was deleted; the comment stays.
+  authorId    String?   @map("author_id") @db.Uuid
+  body        String
+  /// Set when the body is edited, so the UI can show "edited".
+  editedAt    DateTime? @map("edited_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  task      Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author    User?     @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  /// A task's thread, oldest first.
+  @@index([taskId, createdAt])
+  @@map("comments")
+}
+
+enum ActivityType {
+  TASK_CREATED
+  TASK_UPDATED
+  TASK_MOVED
+  TASK_DELETED
+  COMMENT_ADDED
+}
+
+/// Append-only history ("Ann moved WEB-3 to Done"). Rows are never updated.
+model Activity {
+  id          String       @id @default(uuid()) @db.Uuid
+  workspaceId String       @map("workspace_id") @db.Uuid
+  projectId   String       @map("project_id") @db.Uuid
+  /// NULL once the task is deleted: the history outlives the task.
+  taskId      String?      @map("task_id") @db.Uuid
+  /// Snapshot of "WEB-3" so entries stay readable after the task is gone.
+  taskKey     String       @map("task_key")
+  actorId     String?      @map("actor_id") @db.Uuid
+  type        ActivityType
+  /// Type-specific details, e.g. { "from": "TODO", "to": "DONE" }. Shapes live in @teamflow/shared.
+  data        Json         @default("{}")
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  task      Task?     @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  actor     User?     @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  /// Project feed and task feed, newest first.
+  @@index([projectId, createdAt])
+  @@index([taskId, createdAt])
+  @@map("activities")
 }
 
 /// A user's role in one workspace. Access to workspace data is decided by this row.

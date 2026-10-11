@@ -4,12 +4,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { WorkspaceRole } from '@teamflow/shared';
+import { DomainEvents } from '../../events/domain-events';
 import { Membership, Prisma } from '../../generated/prisma/client';
+import { ActivityService } from '../activity/activity.service';
 import { ProjectsService } from '../projects/projects.service';
 import { MembershipsRepository } from '../workspaces/memberships.repository';
 import { WorkspaceMember } from '../workspaces/workspace-member';
 import { TasksRepository, TaskWithRelations } from './tasks.repository';
-import { TasksService } from './tasks.service';
+import { changedFields, TasksService } from './tasks.service';
 
 const WS = 'ws-1';
 const PROJECT = 'p-1';
@@ -58,6 +60,14 @@ const prismaError = (code: string) =>
     clientVersion: 'test',
   });
 
+const activityBase = {
+  workspaceId: WS,
+  projectId: PROJECT,
+  taskId: 't-1',
+  taskKey: 'WEB-7',
+  actorId: 'me',
+};
+
 describe('TasksService', () => {
   let repo: jest.Mocked<
     Pick<
@@ -67,12 +77,14 @@ describe('TasksService', () => {
   >;
   let projects: jest.Mocked<Pick<ProjectsService, 'get'>>;
   let memberships: jest.Mocked<Pick<MembershipsRepository, 'find'>>;
+  let activity: jest.Mocked<Pick<ActivityService, 'record'>>;
+  let events: jest.Mocked<Pick<DomainEvents, 'publish'>>;
   let service: TasksService;
 
   beforeEach(() => {
     repo = {
       list: jest.fn(),
-      find: jest.fn(),
+      find: jest.fn().mockResolvedValue(task()),
       create: jest.fn(),
       update: jest.fn(),
       move: jest.fn(),
@@ -80,12 +92,19 @@ describe('TasksService', () => {
     };
     projects = { get: jest.fn() };
     memberships = { find: jest.fn() };
+    activity = { record: jest.fn() };
+    events = { publish: jest.fn() };
     service = new TasksService(
       repo as unknown as TasksRepository,
       projects as unknown as ProjectsService,
       memberships as unknown as MembershipsRepository,
+      activity as unknown as ActivityService,
+      events as unknown as DomainEvents,
     );
   });
+
+  /** Board event payload types published so far, in order. */
+  const published = () => events.publish.mock.calls.map(([e]) => e.event.type);
 
   describe('list', () => {
     it('checks the project exists in the workspace, then returns its tasks', async () => {
@@ -151,6 +170,23 @@ describe('TasksService', () => {
       });
     });
 
+    it('publishes the new task and records TASK_CREATED', async () => {
+      repo.create.mockResolvedValue(task());
+
+      await service.create(member('MEMBER'), PROJECT, { title: 'Fix login' });
+
+      expect(published()).toEqual(['task.upserted']);
+      expect(events.publish.mock.calls[0][0]).toMatchObject({
+        workspaceId: WS,
+        event: { projectId: PROJECT, actorId: 'me' },
+      });
+      expect(activity.record).toHaveBeenCalledWith({
+        ...activityBase,
+        type: 'TASK_CREATED',
+        data: { title: 'Fix login' },
+      });
+    });
+
     it('resolves the assignee to their membership in this workspace', async () => {
       memberships.find.mockResolvedValue(bobMembership);
       repo.create.mockResolvedValue(task());
@@ -176,18 +212,20 @@ describe('TasksService', () => {
       expect(repo.create).not.toHaveBeenCalled();
     });
 
-    it('returns 404 when the project is not in this workspace', async () => {
+    it('returns 404 when the project is not in this workspace, publishing nothing', async () => {
       repo.create.mockRejectedValue(prismaError('P2025'));
 
       await expect(
         service.create(member('MEMBER'), 'other', { title: 'X' }),
       ).rejects.toThrow(new NotFoundException('Project not found'));
+      expect(events.publish).not.toHaveBeenCalled();
+      expect(activity.record).not.toHaveBeenCalled();
     });
   });
 
   describe('update', () => {
     it('only sends provided fields', async () => {
-      repo.update.mockResolvedValue(task());
+      repo.update.mockResolvedValue(task({ title: 'New', priority: 'HIGH' }));
 
       await service.update(member('MEMBER'), PROJECT, 't-1', {
         title: ' New ',
@@ -201,20 +239,23 @@ describe('TasksService', () => {
       expect(memberships.find).not.toHaveBeenCalled();
     });
 
-    it('unassigns with null without a membership lookup', async () => {
-      repo.update.mockResolvedValue(task());
+    it('records which fields actually changed', async () => {
+      repo.update.mockResolvedValue(task({ priority: 'HIGH' }));
 
       await service.update(member('MEMBER'), PROJECT, 't-1', {
-        assigneeId: null,
+        title: 'Fix login', // same as before: not a change
+        priority: 'HIGH',
       });
 
-      expect(repo.update).toHaveBeenCalledWith(WS, PROJECT, 't-1', {
-        assigneeMembershipId: null,
+      expect(activity.record).toHaveBeenCalledWith({
+        ...activityBase,
+        type: 'TASK_UPDATED',
+        data: { fields: ['priority'] },
       });
-      expect(memberships.find).not.toHaveBeenCalled();
+      expect(published()).toEqual(['task.upserted']);
     });
 
-    it('maps the assignee name into the response', async () => {
+    it('records the new assignee when assigning', async () => {
       memberships.find.mockResolvedValue(bobMembership);
       repo.update.mockResolvedValue(
         task({
@@ -228,19 +269,53 @@ describe('TasksService', () => {
       });
 
       expect(result.assignee).toEqual({ userId: 'bob', name: 'Bob' });
+      expect(activity.record).toHaveBeenCalledWith({
+        ...activityBase,
+        type: 'TASK_UPDATED',
+        data: {
+          fields: ['assignee'],
+          assignee: { userId: 'bob', name: 'Bob' },
+        },
+      });
+    });
+
+    it('unassigns with null without a membership lookup', async () => {
+      repo.find.mockResolvedValue(task({ assigneeMembershipId: 'm-bob' }));
+      repo.update.mockResolvedValue(task());
+
+      await service.update(member('MEMBER'), PROJECT, 't-1', {
+        assigneeId: null,
+      });
+
+      expect(repo.update).toHaveBeenCalledWith(WS, PROJECT, 't-1', {
+        assigneeMembershipId: null,
+      });
+      expect(memberships.find).not.toHaveBeenCalled();
+    });
+
+    it('records nothing for a no-op update', async () => {
+      repo.update.mockResolvedValue(task());
+
+      await service.update(member('MEMBER'), PROJECT, 't-1', {
+        title: 'Fix login',
+      });
+
+      expect(activity.record).not.toHaveBeenCalled();
+      expect(events.publish).not.toHaveBeenCalled();
     });
 
     it('returns 404 for a task outside this project', async () => {
-      repo.update.mockRejectedValue(prismaError('P2025'));
+      repo.find.mockResolvedValue(null);
 
       await expect(
         service.update(member('MEMBER'), PROJECT, 't-x', { title: 'X' }),
       ).rejects.toBeInstanceOf(NotFoundException);
+      expect(repo.update).not.toHaveBeenCalled();
     });
   });
 
   describe('move', () => {
-    it('moves inside the verified workspace and project', async () => {
+    it('moves, publishes, and records a status change', async () => {
       repo.move.mockResolvedValue(task({ status: 'DONE', position: 2 }));
 
       const result = await service.move(member('MEMBER'), PROJECT, 't-1', {
@@ -250,10 +325,28 @@ describe('TasksService', () => {
 
       expect(repo.move).toHaveBeenCalledWith(WS, PROJECT, 't-1', 'DONE', 2);
       expect(result.status).toBe('DONE');
+      expect(published()).toEqual(['task.moved']);
+      expect(activity.record).toHaveBeenCalledWith({
+        ...activityBase,
+        type: 'TASK_MOVED',
+        data: { from: 'TODO', to: 'DONE' },
+      });
     });
 
-    it('returns 404 when the task or project is not found', async () => {
-      repo.move.mockResolvedValue(null);
+    it('publishes but does not record a reorder within the same column', async () => {
+      repo.move.mockResolvedValue(task({ position: 3 }));
+
+      await service.move(member('MEMBER'), PROJECT, 't-1', {
+        status: 'TODO',
+        index: 3,
+      });
+
+      expect(published()).toEqual(['task.moved']);
+      expect(activity.record).not.toHaveBeenCalled();
+    });
+
+    it('returns 404 when the task is not found', async () => {
+      repo.find.mockResolvedValue(null);
 
       await expect(
         service.move(member('MEMBER'), PROJECT, 't-x', {
@@ -261,16 +354,22 @@ describe('TasksService', () => {
           index: 0,
         }),
       ).rejects.toBeInstanceOf(NotFoundException);
+      expect(repo.move).not.toHaveBeenCalled();
     });
   });
 
   describe('delete', () => {
-    it('lets the reporter delete their own task', async () => {
-      repo.find.mockResolvedValue(task({ reporterId: 'me' }));
-
+    it('lets the reporter delete their own task and keeps the history readable', async () => {
       await service.delete(member('MEMBER'), PROJECT, 't-1');
 
       expect(repo.delete).toHaveBeenCalledWith(WS, PROJECT, 't-1');
+      expect(published()).toEqual(['task.deleted']);
+      expect(activity.record).toHaveBeenCalledWith({
+        ...activityBase,
+        taskId: null,
+        type: 'TASK_DELETED',
+        data: { title: 'Fix login' },
+      });
     });
 
     it("forbids a MEMBER from deleting someone else's task", async () => {
@@ -280,6 +379,7 @@ describe('TasksService', () => {
         service.delete(member('MEMBER'), PROJECT, 't-1'),
       ).rejects.toBeInstanceOf(ForbiddenException);
       expect(repo.delete).not.toHaveBeenCalled();
+      expect(activity.record).not.toHaveBeenCalled();
     });
 
     it('lets an ADMIN delete any task', async () => {
@@ -297,5 +397,28 @@ describe('TasksService', () => {
         service.delete(member('ADMIN'), PROJECT, 't-x'),
       ).rejects.toBeInstanceOf(NotFoundException);
     });
+  });
+});
+
+describe('changedFields', () => {
+  it('lists every tracked field that differs', () => {
+    const before = task();
+    const after = task({
+      title: 'Other',
+      description: 'New',
+      priority: 'LOW',
+      assigneeMembershipId: 'm-1',
+    });
+
+    expect(changedFields(before, after)).toEqual([
+      'title',
+      'description',
+      'priority',
+      'assignee',
+    ]);
+  });
+
+  it('ignores untracked fields such as position', () => {
+    expect(changedFields(task(), task({ position: 9 }))).toEqual([]);
   });
 });

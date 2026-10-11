@@ -5,14 +5,18 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  BoardEventPayload,
   canDeleteTask,
   CreateTaskRequest,
   formatTaskKey,
   MoveTaskRequest,
   TaskDto,
+  TrackedTaskField,
   UpdateTaskRequest,
 } from '@teamflow/shared';
+import { DomainEvents } from '../../events/domain-events';
 import { orNotFound } from '../../prisma/prisma-errors';
+import { ActivityService } from '../activity/activity.service';
 import { ProjectsService } from '../projects/projects.service';
 import { MembershipsRepository } from '../workspaces/memberships.repository';
 import { WorkspaceMember } from '../workspaces/workspace-member';
@@ -52,10 +56,27 @@ function normalizeDescription(value: string | null | undefined): string | null {
   return trimmed ? trimmed : null;
 }
 
+/** Which tracked fields differ between two versions of a task. */
+export function changedFields(
+  before: TaskWithRelations,
+  after: TaskWithRelations,
+): TrackedTaskField[] {
+  const fields: TrackedTaskField[] = [];
+  if (before.title !== after.title) fields.push('title');
+  if (before.description !== after.description) fields.push('description');
+  if (before.priority !== after.priority) fields.push('priority');
+  if (before.assigneeMembershipId !== after.assigneeMembershipId) {
+    fields.push('assignee');
+  }
+  return fields;
+}
+
 /**
  * The guard has checked the minimum role (VIEWER reads, MEMBER writes). This service
  * adds the rules that depend on data: the assignee must be a member of THIS
  * workspace, and only the reporter or an admin may delete a task.
+ *
+ * After every successful change it records activity and publishes a board event.
  */
 @Injectable()
 export class TasksService {
@@ -63,6 +84,8 @@ export class TasksService {
     private readonly tasks: TasksRepository,
     private readonly projects: ProjectsService,
     private readonly memberships: MembershipsRepository,
+    private readonly activity: ActivityService,
+    private readonly events: DomainEvents,
   ) {}
 
   async list(member: WorkspaceMember, projectId: string): Promise<TaskDto[]> {
@@ -77,11 +100,7 @@ export class TasksService {
     projectId: string,
     taskId: string,
   ): Promise<TaskDto> {
-    const task = await this.tasks.find(member.workspaceId, projectId, taskId);
-    if (!task) {
-      throw new NotFoundException(TASK_NOT_FOUND);
-    }
-    return toTaskDto(task);
+    return toTaskDto(await this.findOrFail(member, projectId, taskId));
   }
 
   async create(
@@ -104,7 +123,15 @@ export class TasksService {
       }),
       PROJECT_NOT_FOUND,
     );
-    return toTaskDto(task);
+    const dto = toTaskDto(task);
+
+    this.publish(member, projectId, { type: 'task.upserted', task: dto });
+    await this.activity.record({
+      ...this.activityBase(member, task),
+      type: 'TASK_CREATED',
+      data: { title: task.title },
+    });
+    return dto;
   }
 
   async update(
@@ -113,6 +140,8 @@ export class TasksService {
     taskId: string,
     request: UpdateTaskRequest,
   ): Promise<TaskDto> {
+    const before = await this.findOrFail(member, projectId, taskId);
+
     // undefined = leave unchanged; null = clear (description / assignee).
     const data: UpdateTaskData = {};
     if (request.title !== undefined) {
@@ -131,11 +160,24 @@ export class TasksService {
       );
     }
 
-    const task = await orNotFound(
+    const after = await orNotFound(
       this.tasks.update(member.workspaceId, projectId, taskId, data),
       TASK_NOT_FOUND,
     );
-    return toTaskDto(task);
+    const dto = toTaskDto(after);
+
+    const fields = changedFields(before, after);
+    if (fields.length > 0) {
+      this.publish(member, projectId, { type: 'task.upserted', task: dto });
+      await this.activity.record({
+        ...this.activityBase(member, after),
+        type: 'TASK_UPDATED',
+        data: fields.includes('assignee')
+          ? { fields, assignee: dto.assignee }
+          : { fields },
+      });
+    }
+    return dto;
   }
 
   async move(
@@ -144,6 +186,7 @@ export class TasksService {
     taskId: string,
     request: MoveTaskRequest,
   ): Promise<TaskDto> {
+    const before = await this.findOrFail(member, projectId, taskId);
     const task = await this.tasks.move(
       member.workspaceId,
       projectId,
@@ -154,6 +197,21 @@ export class TasksService {
     if (!task) {
       throw new NotFoundException(TASK_NOT_FOUND);
     }
+
+    this.publish(member, projectId, {
+      type: 'task.moved',
+      taskId,
+      status: request.status,
+      index: request.index,
+    });
+    // Reordering inside a column is not history worth recording; a status change is.
+    if (before.status !== task.status) {
+      await this.activity.record({
+        ...this.activityBase(member, task),
+        type: 'TASK_MOVED',
+        data: { from: before.status, to: task.status },
+      });
+    }
     return toTaskDto(task);
   }
 
@@ -162,10 +220,7 @@ export class TasksService {
     projectId: string,
     taskId: string,
   ): Promise<void> {
-    const task = await this.tasks.find(member.workspaceId, projectId, taskId);
-    if (!task) {
-      throw new NotFoundException(TASK_NOT_FOUND);
-    }
+    const task = await this.findOrFail(member, projectId, taskId);
     if (!canDeleteTask(member.role, task.reporterId === member.userId)) {
       throw new ForbiddenException(
         'Only the reporter or an admin can delete this task',
@@ -175,6 +230,47 @@ export class TasksService {
       this.tasks.delete(member.workspaceId, projectId, taskId),
       TASK_NOT_FOUND,
     );
+
+    this.publish(member, projectId, { type: 'task.deleted', taskId });
+    await this.activity.record({
+      ...this.activityBase(member, task),
+      taskId: null, // the row is gone; the key snapshot keeps the entry readable
+      type: 'TASK_DELETED',
+      data: { title: task.title },
+    });
+  }
+
+  private async findOrFail(
+    member: WorkspaceMember,
+    projectId: string,
+    taskId: string,
+  ): Promise<TaskWithRelations> {
+    const task = await this.tasks.find(member.workspaceId, projectId, taskId);
+    if (!task) {
+      throw new NotFoundException(TASK_NOT_FOUND);
+    }
+    return task;
+  }
+
+  private activityBase(member: WorkspaceMember, task: TaskWithRelations) {
+    return {
+      workspaceId: member.workspaceId,
+      projectId: task.projectId,
+      taskId: task.id,
+      taskKey: formatTaskKey(task.project.key, task.number),
+      actorId: member.userId,
+    };
+  }
+
+  private publish(
+    member: WorkspaceMember,
+    projectId: string,
+    payload: BoardEventPayload,
+  ): void {
+    this.events.publish({
+      workspaceId: member.workspaceId,
+      event: { ...payload, projectId, actorId: member.userId },
+    });
   }
 
   /**
